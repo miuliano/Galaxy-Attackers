@@ -84,11 +84,12 @@ public class VoxelModel : MonoBehaviour {
         Debug.Log("voxel data = " + voxelData.ToString());
     }
 
-    void UpdateMesh()
+    public void UpdateMesh()
     {
         quadCount = 0;
         vertices.Clear();
         triangles.Clear();
+        uvs.Clear();
 
         int x = 0, y = 0;
 
@@ -129,7 +130,7 @@ public class VoxelModel : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-        mesh = GetComponent<MeshFilter>().mesh;
+        mesh = GetComponent<MeshFilter>().sharedMesh;
 	}
 	
 	// Update is called once per frame
@@ -168,9 +169,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 2);
         triangles.Add(quadCount * 4 + 3);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
@@ -195,9 +202,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 3);
         triangles.Add(quadCount * 4 + 2);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
@@ -222,9 +235,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 3);
         triangles.Add(quadCount * 4 + 2);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
@@ -249,9 +268,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 2);
         triangles.Add(quadCount * 4 + 3);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
@@ -276,9 +301,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 3);
         triangles.Add(quadCount * 4 + 2);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
@@ -303,9 +334,15 @@ public class VoxelModel : MonoBehaviour {
         triangles.Add(quadCount * 4 + 2);
         triangles.Add(quadCount * 4 + 3);
 
+        uvs.Add(new Vector2(0.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 0.0f));
+        uvs.Add(new Vector2(1.0f, 1.0f));
+        uvs.Add(new Vector2(0.0f, 1.0f));
+
         mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
+        mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
         mesh.RecalculateBounds();
