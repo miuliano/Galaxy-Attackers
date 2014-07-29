@@ -24,9 +24,6 @@ public class ChangeProjection : MonoBehaviour {
         ortho = Matrix4x4.Ortho(-orthographicSize * aspect, orthographicSize * aspect, -orthographicSize, orthographicSize, orthographicNear, orthographicFar);
 
         isOrtho = false;
-
-        Debug.Log("Perspective:\r\n" + perspective.ToString());
-        Debug.Log("Orthogonal:\r\n" + ortho.ToString());
 	}
 	
 	// Update is called once per frame

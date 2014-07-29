@@ -3,6 +3,8 @@ using System.Collections;
 
 public class ExplodeAliens : MonoBehaviour {
 
+    public GameObject debris;
+
 	// Use this for initialization
 	void Start () {
 	
@@ -19,7 +21,18 @@ public class ExplodeAliens : MonoBehaviour {
             {
                 if (rayHit.transform.tag == "Enemy")
                 {
-                    rayHit.transform.GetComponent<AlienManager>().Explode(rayHit.point);
+                    Vector3 hitPoint = rayHit.point;
+                    Vector3 localHitPoint = rayHit.transform.InverseTransformPoint(hitPoint);
+
+                    VoxelModel vm = rayHit.transform.GetComponent<VoxelModel>();
+
+                    if (vm.GetVoxel(localHitPoint))
+                    {
+                        vm.SetVoxel(localHitPoint, 0);
+
+                        Instantiate(debris, vm.transform.TransformPoint(vm.GetVoxelCentre(localHitPoint)), Quaternion.identity);
+                    }
+
                 }
             }
         }
