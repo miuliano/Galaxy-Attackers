@@ -11,7 +11,8 @@ public class VoxelModel : MonoBehaviour {
     private int[] voxelData;
     private int volumeWidth;
     private int volumeHeight;
-    
+	private int voxelCount;
+
     private Mesh mesh;
     private List<Vector3> vertices = new List<Vector3>();
     private List<int> triangles = new List<int>();
@@ -129,11 +130,42 @@ public class VoxelModel : MonoBehaviour {
         flagUpdate = true;
     }
 
+	/// <summary>
+	/// Returns the filled voxels as centre points.
+	/// </summary>
+	/// <returns>Centre points of the voxels.</returns>
+	public Vector3[] ToPoints()
+	{
+		Vector3[] points = new Vector3[voxelCount];
+		int index = 0;
+
+		int x = 0, y = 0;
+		
+		for (; y < volumeHeight; y++)
+		{
+			for (x = 0; x < volumeWidth; x++)
+			{
+				if (voxelData[y * volumeWidth + x] == 1)
+				{
+					points[index] = new Vector3(x * voxelSize + voxelSize / 2.0f, -y * voxelSize - voxelSize / 2.0f,  voxelSize / 2.0f);
+					index++;
+				}
+			}
+		}
+
+		return points;
+	}
+
+	public void DestroyVoxelModel()
+	{
+		Destroy(this.gameObject);
+	}
+
     public Vector3 GetVoxelCentre(Vector3 point)
     {
-        float x = Mathf.Floor(point.x) + 0.5f;
-        float y = Mathf.Floor(point.y) + 0.5f;
-        float z = point.z + 0.5f;
+		float x = Mathf.Floor(point.x) + voxelSize / 2.0f;
+		float y = Mathf.Floor(point.y) + voxelSize / 2.0f;
+		float z = Mathf.Floor(point.z) + voxelSize / 2.0f;
 
         return new Vector3(x, y, z);
     }
@@ -151,6 +183,7 @@ public class VoxelModel : MonoBehaviour {
             GetComponent<MeshFilter>().sharedMesh = mesh;
         }
 
+		voxelCount = 0;
         quadCount = 0;
         vertices.Clear();
         triangles.Clear();
@@ -185,7 +218,9 @@ public class VoxelModel : MonoBehaviour {
 
                     // Bottom-quad
                     if (y == volumeHeight - 1 || (y < volumeHeight - 1 && voxelData[(y + 1) * volumeWidth + x] == 0))
-                        QuadBottom(x * voxelSize, -y * voxelSize, 0.0f);                    
+                        QuadBottom(x * voxelSize, -y * voxelSize, 0.0f);   
+
+					voxelCount++;
                 }
             }
         }
