@@ -4,6 +4,7 @@ using System.Collections.Generic;
 
 public class ExplodeAliens : MonoBehaviour {
 
+	public GameObject bullet;
     public GameObject debris;
 	public float explosionForce = 100.0f;
 	public float explosionRadius = 10.0f;
@@ -31,7 +32,7 @@ public class ExplodeAliens : MonoBehaviour {
 
                     VoxelModel vm = rayHit.transform.GetComponent<VoxelModel>();
 
-                    if (vm.GetVoxel(localHitPoint))
+                    if (vm.GetVoxel(localHitPoint) > 0)
                     {
 						Vector3[] debrisPoints = vm.ToPoints();
 
@@ -44,7 +45,7 @@ public class ExplodeAliens : MonoBehaviour {
 							debrisList.AddLast(go);
 						}
 
-						vm.DestroyVoxelModel();
+						Destroy(vm.gameObject);
                     }
                 }
             }

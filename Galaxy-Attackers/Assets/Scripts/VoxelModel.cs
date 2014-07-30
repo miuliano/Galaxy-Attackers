@@ -4,52 +4,95 @@ using System.Collections.Generic;
 
 public class VoxelModel : MonoBehaviour {
 
+	/// <summary>
+	/// Text file containing voxel information.
+	/// </summary>
     public TextAsset voxelFile;
+
+	/// <summary>
+	/// The size of each voxel.
+	/// </summary>
     public float voxelSize = 1.0f;
+
+	/// <summary>
+	/// If set, updates the attached box collider when generated.
+	/// </summary>
     public bool updateBoxCollider = false;
 
     private int[] voxelData;
     private int volumeWidth;
     private int volumeHeight;
 	private int voxelCount;
-
+	
     private Mesh mesh;
-    private List<Vector3> vertices = new List<Vector3>();
+	private int quadCount;
+	private List<Vector3> vertices = new List<Vector3>();
     private List<int> triangles = new List<int>();
     private List<Vector2> uvs = new List<Vector2>();
-    private int quadCount;
 
     private bool flagUpdate = false;
 
     [ContextMenu ("Generate Mesh")]
-    void GenerateMesh()
+    private void GenerateMesh()
     {
         LoadVoxelData();
+
+		// Create mesh if missing
+		if (mesh == null)
+		{
+			mesh = new Mesh();
+			mesh.name = "voxelMesh";
+			GetComponent<MeshFilter>().sharedMesh = mesh;
+		}
+
         UpdateMesh();
-        UpdateBoxCollider();
+
+		if (updateBoxCollider)
+        	UpdateBoxCollider();
     }
 
     private void UpdateBoxCollider()
     {
-        if (!updateBoxCollider) return;
+        BoxCollider boxCollider = GetComponent<BoxCollider>();
 
-        BoxCollider box = GetComponent<BoxCollider>();
+		if (boxCollider == null) {
+			Debug.LogWarning("VoxelModel::UpdateBoxCollider(): No box collider component found.");
+			return;
+		}
 
-        box.size = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
-        box.center = new Vector3(box.size.x / 2.0f, -box.size.y / 2.0f, box.size.z / 2.0f);
+        boxCollider.size   = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
+        boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
     }
 
-    private void LoadVoxelData()
+	/// <summary>
+	/// Load voxel data from a file.
+	/// </summary>
+	/// <param name="file">File containing voxel data</param>
+	public void LoadVoxelData(TextAsset file)
+	{
+		voxelFile = file;
+		LoadVoxelData();
+	}
+
+	/// <summary>
+	/// Load voxel data from the current file.
+	/// </summary>
+    public void LoadVoxelData()
     {
-        if (voxelFile == null) return;
+        if (voxelFile == null) 
+		{
+			Debug.LogWarning("VoxelModel::LoadVoxelData(): No voxel file specified.");
+			return;
+		}
 
-        string text = voxelFile.text;
+		// Slurp and split
+        string text    = voxelFile.text;
         string[] lines = text.Split(new char[] {'\r','\n'});
-
-        int index = 0;
 
         volumeWidth = 0;
         volumeHeight = 0;
+
+		int index = 0;
 
         foreach (string line in lines)
         {
@@ -75,53 +118,67 @@ public class VoxelModel : MonoBehaviour {
                     {
                         voxelData[index] = int.Parse(voxel);
 
-                        index += 1;
+                        index++;
                     }
                 }
             }
         }
     }
 
-    public bool GetVoxel(Vector3 point)
+	/// <summary>
+	/// Return the value of a voxel at a given point.
+	/// </summary>
+	/// <returns>The value of the voxel.</returns>
+	/// <param name="point">Point in local coordinates.</param>
+    public int GetVoxel(Vector3 point)
     {
+		// Check voxel data has been loaded
+		if (voxelData == null)
+		{
+			Debug.LogWarning("VoxelModel::GetVoxel(): No voxel is null.");
+			return -1;
+		}
+
         // Scale
         point = point / voxelSize;
 
         int x = Mathf.FloorToInt(point.x);
         int y = Mathf.Abs(Mathf.FloorToInt(point.y)) - 1;
 
-        if (voxelData == null)
-        {
-            Debug.Log("VoxelModel::GetVoxel(): voxelData is null.");
-            return false;
-        }
-
+		// Bounds check
         if (y * volumeWidth + x >= voxelData.Length)
         {
-            Debug.Log("VoxelModel::GetVoxel(): Out of bounds.");
-            return false;
+            Debug.LogWarning("VoxelModel::GetVoxel(): Out of bounds.");
+            return -1;
         }
 
-        return voxelData[y * volumeWidth + x] == 1 ? true : false;
+        return voxelData[y * volumeWidth + x];
     }
 
+	/// <summary>
+	/// Set the value of a voxel.
+	/// </summary>
+	/// <param name="point">Local point to set the voxel at.</param>
+	/// <param name="value">Value of the voxel.</param>
     public void SetVoxel(Vector3 point, int value)
     {
+		// Check voxel data exists
+		if (voxelData == null)
+		{
+			Debug.LogWarning("VoxelModel::SetVoxel(): voxelData is null.");
+			return;
+		}
+
         // Scale
         point = point / voxelSize;
 
         int x = Mathf.FloorToInt(point.x);
         int y = Mathf.Abs(Mathf.FloorToInt(point.y)) - 1;
 
-        if (voxelData == null)
+		// Bounds check, as well as point in range check
+        if (y * volumeWidth + x >= voxelData.Length || x < 0 || y < 0)
         {
-            Debug.Log("VoxelModel::SetVoxel(): voxelData is null.");
-            return;
-        }
-
-        if (y * volumeWidth + x >= voxelData.Length)
-        {
-            Debug.Log("VoxelModel::SetVoxel(): Out of bounds.");
+            Debug.LogWarning("VoxelModel::SetVoxel(): Out of bounds.");
             return;
         }
 
@@ -137,8 +194,8 @@ public class VoxelModel : MonoBehaviour {
 	public Vector3[] ToPoints()
 	{
 		Vector3[] points = new Vector3[voxelCount];
-		int index = 0;
 
+		int index = 0;
 		int x = 0, y = 0;
 		
 		for (; y < volumeHeight; y++)
@@ -156,35 +213,20 @@ public class VoxelModel : MonoBehaviour {
 		return points;
 	}
 
-	public void DestroyVoxelModel()
-	{
-		Destroy(this.gameObject);
-	}
-
-    public Vector3 GetVoxelCentre(Vector3 point)
-    {
-		float x = Mathf.Floor(point.x) + voxelSize / 2.0f;
-		float y = Mathf.Floor(point.y) + voxelSize / 2.0f;
-		float z = Mathf.Floor(point.z) + voxelSize / 2.0f;
-
-        return new Vector3(x, y, z);
-    }
-
+	/// <summary>
+	/// Updates the mesh with the current voxel data.
+	/// </summary>
     public void UpdateMesh()
     {
-        // Have to use shared mesh here otherwise meshes leak
-        mesh = GetComponent<MeshFilter>().sharedMesh;
+		if (mesh == null)
+		{
+			Debug.LogWarning("VoxelModel::UpdateMesh(): No mesh found.");
+			return;
+		}
 
-        // Create mesh if missing
-        if (mesh == null)
-        {
-            mesh = new Mesh();
-            mesh.name = "voxelMesh";
-            GetComponent<MeshFilter>().sharedMesh = mesh;
-        }
-
+		// Clear/reset everything
 		voxelCount = 0;
-        quadCount = 0;
+        quadCount  = 0;
         vertices.Clear();
         triangles.Clear();
         uvs.Clear();
@@ -195,7 +237,7 @@ public class VoxelModel : MonoBehaviour {
         {
             for (x = 0; x < volumeWidth; x++)
             {
-                // Front-quad
+                // Handle filled voxels
                 if (voxelData[y * volumeWidth + x] == 1)
                 {
                     // Always draw front
@@ -225,14 +267,14 @@ public class VoxelModel : MonoBehaviour {
             }
         }
 
-        mesh.Clear();
+		mesh.Clear();
         mesh.vertices = vertices.ToArray();
         mesh.triangles = triangles.ToArray();
         mesh.uv = uvs.ToArray();
 
         mesh.Optimize();
-        mesh.RecalculateBounds();
         mesh.RecalculateNormals();
+		mesh.RecalculateBounds();
     }
 
 	// Use this for initialization
@@ -240,9 +282,7 @@ public class VoxelModel : MonoBehaviour {
 
         // Load data if missing
         if (voxelData == null)
-        {
             LoadVoxelData();
-        }
 
         // Create mesh if missing
         if (mesh == null)
@@ -252,7 +292,9 @@ public class VoxelModel : MonoBehaviour {
             GetComponent<MeshFilter>().sharedMesh = mesh;
 
             UpdateMesh();
-            UpdateBoxCollider();
+
+			if (updateBoxCollider)
+            	UpdateBoxCollider();
         }
 	}
 	
@@ -261,27 +303,15 @@ public class VoxelModel : MonoBehaviour {
         if (flagUpdate == true)
         {
             flagUpdate = false;
+
             UpdateMesh();
-            UpdateBoxCollider();
+
+			if (updateBoxCollider)
+            	UpdateBoxCollider();
         }
 	}
 
-    /// <summary>
-    /// Draw a front facing quad (-z direction).
-    /// </summary>
-    /// <param name="position">Position of the top left corner of the quad.</param>
-    void QuadFront (Vector3 position)
-    {
-        QuadFront(position.x, position.y, position.z);
-    }
-
-    /// <summary>
-    /// Draw a front facing quad (-z direction).
-    /// </summary>
-    /// <param name="x">x-coordinate of the top left corner of the quad.</param>
-    /// <param name="y">y-coordinate of the top left corner of the quad.</param>
-    /// <param name="z">z-coordinate of the top left corner of the quad.</param>
-    void QuadFront(float x, float y, float z)
+    private void QuadFront(float x, float y, float z)
     {
         vertices.Add(new Vector3(x    , y    , z    ));
         vertices.Add(new Vector3(x + voxelSize, y, z));
@@ -303,13 +333,7 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
-    /// <summary>
-    /// Draw a back facing quad.
-    /// </summary>
-    /// <param name="x">x-coordinate of the top left corner of the quad.</param>
-    /// <param name="y">y-coordinate of the top left corner of the quad.</param>
-    /// <param name="z">z-coordinate of the top left corner of the quad.</param>
-    void QuadBack(float x, float y, float z)
+	private void QuadBack(float x, float y, float z)
     {
         vertices.Add(new Vector3(x, y, z + voxelSize));
         vertices.Add(new Vector3(x + voxelSize, y, z + voxelSize));
@@ -337,7 +361,7 @@ public class VoxelModel : MonoBehaviour {
     /// <param name="x">x-coordinate of the top left corner of the quad.</param>
     /// <param name="y">y-coordinate of the top left corner of the quad.</param>
     /// <param name="z">z-coordinate of the top left corner of the quad.</param>
-    void QuadTop(float x, float y, float z)
+	private void QuadTop(float x, float y, float z)
     {
         vertices.Add(new Vector3(x, y, z));
         vertices.Add(new Vector3(x + voxelSize, y, z));
@@ -359,7 +383,7 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
-    void QuadBottom(float x, float y, float z)
+	private void QuadBottom(float x, float y, float z)
     {
         vertices.Add(new Vector3(x, y - voxelSize, z));
         vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z));
@@ -381,7 +405,7 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
-    private void QuadLeft(float x, float y, float z)
+	private void QuadLeft(float x, float y, float z)
     {
         vertices.Add(new Vector3(x, y, z));
         vertices.Add(new Vector3(x, y, z + voxelSize));

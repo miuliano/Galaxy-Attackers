@@ -23,5 +23,14 @@ public class PlayerMovement : MonoBehaviour {
         {
             transform.position += Vector3.left * Mathf.Abs(hMove) * Time.deltaTime * playerSpeed;
         }
+
+		if (Input.GetKeyUp(KeyCode.P) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Orthographic)
+		{
+			Camera.main.GetComponent<ChangeProjection>().ToPerspective(1.0f);
+		}
+		if (Input.GetKeyUp(KeyCode.O) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Perspective)
+		{
+			Camera.main.GetComponent<ChangeProjection>().ToOrthographic(1.0f);
+		}
 	}
 }

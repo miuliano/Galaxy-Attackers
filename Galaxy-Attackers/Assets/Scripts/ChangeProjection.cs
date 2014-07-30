@@ -1,54 +1,86 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent (typeof (Camera))]
 public class ChangeProjection : MonoBehaviour {
 
+	public enum ProjectionState
+	{
+		Perspective,
+		Orthographic,
+		InTransition
+	}
+
     public float orthographicNear = 0.3f;
-    public float orthographicFar = 1000.0f;
+    public float orthographicFar  = 1000.0f;
     public float orthographicSize = 70.0f;
-    public float duration = 1.0f;
 
     private Matrix4x4 ortho;
     private Matrix4x4 perspective;
-
-    private bool isOrtho;
     private float aspect;
+	private ProjectionState projectionState;
 
 	// Use this for initialization
 	void Start () {
         
         perspective = camera.projectionMatrix;
         
+		// Calculate aspect ratio
         aspect = (Screen.width + 0.0f) / (Screen.height + 0.0f);
 
+		// Create orthographic projection
         ortho = Matrix4x4.Ortho(-orthographicSize * aspect, orthographicSize * aspect, -orthographicSize, orthographicSize, orthographicNear, orthographicFar);
 
-        isOrtho = false;
-	}
-	
-	// Update is called once per frame
-	void Update () {
-	    if (Input.GetKeyUp(KeyCode.Space))
-        {
-            if (isOrtho)
-            {
-                BlendProjection(perspective, ortho, duration, true);
-            }
-            else
-            {
-                BlendProjection(perspective, ortho, duration, false);
-            }
-
-            isOrtho = !isOrtho;
-        }
+		projectionState = ProjectionState.Perspective;
 	}
 
-    private Matrix4x4 MatrixHeavisideInterpolation(Matrix4x4 from, Matrix4x4 to, float t)
+	/// <summary>
+	/// Smoothly transform the projection to orthographic.
+	/// </summary>
+	/// <param name="time">Time in seconds for the transformation.</param>
+	public void ToOrthographic(float time)
+	{
+		if (time < 0.0f) return;
+
+		BlendProjection(ProjectionState.Orthographic, time);
+	}
+
+	/// <summary>
+	/// Smoothly transform the projection to perspective.
+	/// </summary>
+	/// <param name="time">Time in seconds for the transformation.</param>
+	public void ToPerspective(float time)
+	{
+		if (time < 0.0f) return;
+
+		BlendProjection(ProjectionState.Perspective, time);
+	}
+
+	/// <summary>
+	/// Returns the current camera projection state.
+	/// </summary>
+	/// <value>The ProjectionState.</value>
+	public ProjectionState State
+	{
+		get
+		{
+			return projectionState;
+		}
+	}
+
+	/// <summary>
+	/// Perform a logistic interpolation between two matrices.
+	/// </summary>
+	/// <returns>The interpolated matrix.</returns>
+	/// <param name="from">Matrix to transform from.</param>
+	/// <param name="to">Matrix to transform to.</param>
+	/// <param name="t">Interpolation percentage (0..1).</param>
+	/// <param name="p">Logistic exponent.</param>
+    private Matrix4x4 MatrixLogisticInterpolation(Matrix4x4 from, Matrix4x4 to, float t, float p)
     {
         Matrix4x4 result = new Matrix4x4();
         
         // Step function
-        float p = 10.0f;
         float e_p = Mathf.Exp(p);
         float e_pt = Mathf.Exp(p * t);
         
@@ -58,28 +90,36 @@ public class ChangeProjection : MonoBehaviour {
         {
             result[i] = from[i] + (to[i] - from[i]) * t;
         }
+
         return result;
     }
 
-    private void BlendProjection (Matrix4x4 from, Matrix4x4 to, float t, bool reverse)
+    private void BlendProjection(ProjectionState state, float t)
     {
+		projectionState = ProjectionState.InTransition;
+
         StopAllCoroutines();
-        StartCoroutine(BlendCoroutine(from, to, t, reverse));
+        StartCoroutine(BlendCoroutine(state, t));
     }
 
-    private IEnumerator BlendCoroutine(Matrix4x4 from, Matrix4x4 to, float t, bool reverse) {
-        float startTime = Time.time;
+    private IEnumerator BlendCoroutine(ProjectionState state, float t) {
+
         float dt = 0;
+		float p = 10.0f;
+		float startTime = Time.time;
 
         while (Time.time - startTime < t)
         {
             dt = (Time.time - startTime) / t;
-            dt = (reverse) ? 1.0f - dt : dt;
+            dt = (state == ProjectionState.Perspective) ? 1.0f - dt : dt;
 
-            camera.projectionMatrix = MatrixHeavisideInterpolation(from, to, dt);
+            camera.projectionMatrix = MatrixLogisticInterpolation(perspective, ortho, dt, p);
+
             yield return null;
         }
 
-        camera.projectionMatrix = reverse ? from : to;
+        camera.projectionMatrix = (state == ProjectionState.Perspective) ? perspective : ortho;
+
+		projectionState = state;
     }
 }
