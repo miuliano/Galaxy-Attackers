@@ -19,11 +19,16 @@ public class VoxelModel : MonoBehaviour {
 	/// </summary>
     public bool updateBoxCollider = false;
 
+	/// <summary>
+	/// If set, positions the origin at the centre of the model.
+	/// </summary>
+	public bool centreOrigin = false;
+
     private int[] voxelData;
     private int volumeWidth;
     private int volumeHeight;
 	private int voxelCount;
-	
+
     private Mesh mesh;
 	private int quadCount;
 	private List<Vector3> vertices = new List<Vector3>();
@@ -60,8 +65,17 @@ public class VoxelModel : MonoBehaviour {
 			return;
 		}
 
+		// Place box collider origin at the centre of the model
+		if (centreOrigin)
+		{
+			boxCollider.center = Vector3.zero;
+		}
+		else 
+		{
+			boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
+		}
+
         boxCollider.size   = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
-        boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
     }
 
 	/// <summary>
@@ -135,21 +149,35 @@ public class VoxelModel : MonoBehaviour {
 		// Check voxel data has been loaded
 		if (voxelData == null)
 		{
-			Debug.LogWarning("VoxelModel::GetVoxel(): No voxel is null.");
+			Debug.LogWarning("VoxelModel::GetVoxel(): voxelData is null.");
 			return -1;
 		}
 
-        // Scale
-        point = point / voxelSize;
+		Vector3 offset = Vector3.zero;
 
-        int x = Mathf.FloorToInt(point.x);
-        int y = Mathf.Abs(Mathf.FloorToInt(point.y)) - 1;
+		if (centreOrigin)
+		{
+			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+		}
 
+		// Convert to voxel coordinates
+		Vector3 voxPoint = (point - offset) / voxelSize;
+
+		int x = Mathf.FloorToInt(voxPoint.x);
+		int y = (-Mathf.FloorToInt(voxPoint.y)) - 1;
+		
 		// Bounds check
-        if (y * volumeWidth + x >= voxelData.Length)
+        if (y * volumeWidth + x >= voxelData.Length || x < 0 || y < 0)
         {
-            Debug.LogWarning("VoxelModel::GetVoxel(): Out of bounds.");
-            return -1;
+			Debug.LogWarning("VoxelModel::GetVoxel(): Out of bounds\r\n" +
+			                 "\tInput: " + point.ToString() + "\r\n" +
+			                 "\tvoxPoint: " + voxPoint.ToString() + "\r\n" +
+			                 "\tvolumeWidth: " + volumeWidth + "\r\n" +
+			                 "\tvolumeHeight: " + volumeHeight + "\r\n" +
+			                 "\tx: " + x + "\r\n" + 
+			                 "\ty: " + y + "\r\n" +
+			                 "\tIndex: " + (y * volumeWidth + x));
+			                 return -1;
         }
 
         return voxelData[y * volumeWidth + x];
@@ -169,11 +197,18 @@ public class VoxelModel : MonoBehaviour {
 			return;
 		}
 
-        // Scale
-        point = point / voxelSize;
-
-        int x = Mathf.FloorToInt(point.x);
-        int y = Mathf.Abs(Mathf.FloorToInt(point.y)) - 1;
+		Vector3 offset = Vector3.zero;
+		
+		if (centreOrigin)
+		{
+			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+		}
+		
+		// Convert to voxel coordinates
+		Vector3 voxPoint = (point - offset) / voxelSize;
+		
+		int x = Mathf.FloorToInt(voxPoint.x);
+		int y = (-Mathf.FloorToInt(voxPoint.y)) - 1;
 
 		// Bounds check, as well as point in range check
         if (y * volumeWidth + x >= voxelData.Length || x < 0 || y < 0)
@@ -195,6 +230,13 @@ public class VoxelModel : MonoBehaviour {
 	{
 		Vector3[] points = new Vector3[voxelCount];
 
+		Vector3 offset = Vector3.zero;
+
+		if (centreOrigin)
+		{
+			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+		}
+
 		int index = 0;
 		int x = 0, y = 0;
 		
@@ -204,7 +246,7 @@ public class VoxelModel : MonoBehaviour {
 			{
 				if (voxelData[y * volumeWidth + x] == 1)
 				{
-					points[index] = new Vector3(x * voxelSize + voxelSize / 2.0f, -y * voxelSize - voxelSize / 2.0f,  voxelSize / 2.0f);
+					points[index] = new Vector3(x * voxelSize + voxelSize / 2.0f + offset.x, -y * voxelSize - voxelSize / 2.0f + offset.y,  voxelSize / 2.0f + offset.z);
 					index++;
 				}
 			}
@@ -231,6 +273,14 @@ public class VoxelModel : MonoBehaviour {
         triangles.Clear();
         uvs.Clear();
 
+		Vector3 offset = Vector3.zero;
+
+		// Place origin at the centre of the model
+		if (centreOrigin)
+		{
+			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+		}
+
         int x = 0, y = 0;
 
         for (; y < volumeHeight; y++)
@@ -241,26 +291,26 @@ public class VoxelModel : MonoBehaviour {
                 if (voxelData[y * volumeWidth + x] == 1)
                 {
                     // Always draw front
-                    QuadFront(x * voxelSize, -y * voxelSize, 0.0f);
-
-                    // Always draw back
-                    QuadBack(x * voxelSize, -y * voxelSize, 0.0f);
+					QuadFront(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+					
+					// Always draw back
+					QuadBack(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
 
                     // Left-quad
                     if (x == 0 || (x > 0 && voxelData[y * volumeWidth + x - 1] == 0))
-                        QuadLeft(x * voxelSize, -y * voxelSize, 0.0f);
+						QuadLeft(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
 
                     // Right-quad
                     if (x == volumeWidth - 1 || (x < volumeWidth - 1 && voxelData[y * volumeWidth + x + 1] == 0))
-                        QuadRight(x * voxelSize, -y * voxelSize, 0.0f);
+                        QuadRight(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
 
                     // Top-quad
                     if (y == 0 || (y > 0 && voxelData[(y - 1) * volumeWidth + x] == 0))
-                        QuadTop(x * voxelSize, -y * voxelSize, 0.0f);
+                        QuadTop(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
 
                     // Bottom-quad
                     if (y == volumeHeight - 1 || (y < volumeHeight - 1 && voxelData[(y + 1) * volumeWidth + x] == 0))
-                        QuadBottom(x * voxelSize, -y * voxelSize, 0.0f);   
+                        QuadBottom(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);   
 
 					voxelCount++;
                 }
