@@ -1,12 +1,19 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class PlayerControls : MonoBehaviour {
+public class Player : MonoBehaviour {
 
     public float playerSpeed = 10.0f;
 	public Bounds playerBounds = new Bounds(Vector3.zero, Vector3.one);
 	public Vector3 gunOffset = Vector3.zero;
-	public GameObject bullet = null;
+    public GameObject bullet;
+    public Transform playerModel;
+
+    [ContextMenu("Preview")]
+    void Preview()
+    {
+        playerModel.GetComponent<VoxelModel>().Initialize();
+    }
 
 	// Use this for initialization
 	void Start () {

@@ -5,12 +5,25 @@ public class Bullet : MonoBehaviour {
 
 	public Vector3 velocity = Vector3.zero;
 	public Vector3 hitOffset = Vector3.zero;
+    public float explosionForce = 10000.0f;
+    public float explosionRadius = 20.0f;
+    public Transform bulletModel;
 
-	private GameObject explosionManager;
+    private BoxCollider boxCollider;
+
+    [ContextMenu("Preview")]
+    void Preview()
+    {
+        bulletModel.GetComponent<VoxelModel>().Initialize();
+    }
 
 	// Use this for initialization
 	void Start () {
-		explosionManager = GameObject.Find("Explosion Manager");
+        boxCollider = GetComponent<BoxCollider>();
+
+        Bounds bounds = bulletModel.GetComponent<VoxelModel>().GetBounds();
+        boxCollider.center = bounds.center;
+        boxCollider.size = bounds.size;
 	}
 	
 	// Update is called once per frame
@@ -35,16 +48,14 @@ public class Bullet : MonoBehaviour {
 		// Hit enemy
 		if (other.tag == "Enemy")
 		{
-			VoxelModel enemyModel = other.GetComponent<VoxelModel>();
+			Alien enemy = other.GetComponent<Alien>();
 
 			Vector3 hitPoint = transform.position + hitOffset;
-			Vector3 localHitPoint = other.transform.InverseTransformPoint(hitPoint);
 
 			// Collision check
-			if (enemyModel.GetVoxel(localHitPoint) > 0)
+            if (enemy.CheckCollision(hitPoint))
 			{
-				// Explode
-				explosionManager.GetComponent<ExplosionManager>().ExplodeAt(hitPoint, other.gameObject);
+                enemy.ExplodeAt(hitPoint, explosionForce, explosionRadius);				
 
 				// Kill thyself
 				Destroy(gameObject);

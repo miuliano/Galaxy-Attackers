@@ -37,23 +37,28 @@ public class VoxelModel : MonoBehaviour {
 
     private bool flagUpdate = false;
 
-    [ContextMenu ("Generate Mesh")]
-    private void GenerateMesh()
+    [ContextMenu ("Preview")]
+    private void Preview()
+    {
+        Initialize();
+    }
+
+    public void Initialize ()
     {
         LoadVoxelData();
 
-		// Create mesh if missing
-		if (mesh == null)
-		{
-			mesh = new Mesh();
-			mesh.name = "voxelMesh";
-			GetComponent<MeshFilter>().sharedMesh = mesh;
-		}
+        // Create mesh if missing
+        if (mesh == null)
+        {
+            mesh = new Mesh();
+            mesh.name = "voxelMesh";
+            GetComponent<MeshFilter>().sharedMesh = mesh;
+        }
 
         UpdateMesh();
 
-		if (updateBoxCollider)
-        	UpdateBoxCollider();
+        if (updateBoxCollider)
+            UpdateBoxCollider();
     }
 
     private void UpdateBoxCollider()
@@ -76,6 +81,29 @@ public class VoxelModel : MonoBehaviour {
 		}
 
         boxCollider.size   = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
+    }
+
+    /// <summary>
+    /// Returns the bounds of the voxel model.
+    /// </summary>
+    /// <returns>Bounds of the voxel model.</returns>
+    public Bounds GetBounds()
+    {
+        Bounds bounds = new Bounds();
+
+        // Place box collider origin at the centre of the model
+        if (centreOrigin)
+        {
+            bounds.center = Vector3.zero;
+        }
+        else
+        {
+            bounds.center = new Vector3(voxelSize * volumeWidth / 2.0f, -voxelSize * volumeHeight / 2.0f, voxelSize / 2.0f);
+        }
+
+        bounds.size = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
+
+        return bounds;
     }
 
 	/// <summary>
