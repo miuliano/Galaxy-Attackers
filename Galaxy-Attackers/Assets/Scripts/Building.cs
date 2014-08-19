@@ -3,6 +3,9 @@ using System.Collections;
 
 public class Building : MonoBehaviour {
 
+    /// <summary>
+    /// Reference to the building voxel model.
+    /// </summary>
     public Transform buildingModel;
 
     private BoxCollider boxCollider;
@@ -15,6 +18,7 @@ public class Building : MonoBehaviour {
 
     void Start()
     {
+        // Update the box collider bounds
         boxCollider = GetComponent<BoxCollider>();
 
         Bounds bounds = buildingModel.GetComponent<VoxelModel>().GetBounds();

@@ -3,9 +3,24 @@ using System.Collections;
 
 public class Alien : MonoBehaviour {
 	
+    /// <summary>
+    /// Reference to the first frame of the voxel animation.
+    /// </summary>
 	public Transform frame0;
+
+    /// <summary>
+    /// Reference to the second frame of the voxel animation.
+    /// </summary>
 	public Transform frame1;
+
+    /// <summary>
+    /// Reference to the debris voxel model.
+    /// </summary>
     public Transform debris;
+
+    /// <summary>
+    /// Time delay between voxel animation frames.
+    /// </summary>
 	public float animationDelay = 0.5f;
 
 	private int frameIndex = 0;
@@ -59,6 +74,11 @@ public class Alien : MonoBehaviour {
 		}
 	}
 
+    /// <summary>
+    /// Check for collision between a point and the alien.
+    /// </summary>
+    /// <param name="position">Point in world coordinates.</param>
+    /// <returns>True on collision, false otherwise.</returns>
     public bool CheckCollision(Vector3 position)
     {
         if (frameIndex == 0)
@@ -75,6 +95,12 @@ public class Alien : MonoBehaviour {
         return false;
     }
 
+    /// <summary>
+    /// Explodes the alien into debris by a force at a given location.
+    /// </summary>
+    /// <param name="position">Location of the explosion force.</param>
+    /// <param name="force">Magnitude of the explosion force.</param>
+    /// <param name="radius">Radius of the explosion force.</param>
     public void ExplodeAt(Vector3 position, float force, float radius)
     {
         VoxelModel vm = (frameIndex == 0) ? frame0.GetComponent<VoxelModel>() : frame1.GetComponent<VoxelModel>();
@@ -82,7 +108,6 @@ public class Alien : MonoBehaviour {
         foreach (Vector3 point in vm.ToPoints())
         {
             GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
-
             go.rigidbody.AddExplosionForce(force, position, radius);
         }
 

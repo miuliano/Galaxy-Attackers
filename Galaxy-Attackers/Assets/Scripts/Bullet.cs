@@ -3,10 +3,29 @@ using System.Collections;
 
 public class Bullet : MonoBehaviour {
 
+    /// <summary>
+    /// The velocity of the bullet.
+    /// </summary>
 	public Vector3 velocity = Vector3.zero;
+    
+    /// <summary>
+    /// Collision point offset.
+    /// </summary>
 	public Vector3 hitOffset = Vector3.zero;
+
+    /// <summary>
+    /// Force of the bullet collision explosion.
+    /// </summary>
     public float explosionForce = 10000.0f;
+
+    /// <summary>
+    /// Radius of the bullet collision explosion.
+    /// </summary>
     public float explosionRadius = 20.0f;
+
+    /// <summary>
+    /// Reference to the bullet voxel model.
+    /// </summary>
     public Transform bulletModel;
 
     private BoxCollider boxCollider;
@@ -19,18 +38,17 @@ public class Bullet : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        // Update the box collider bounds
         boxCollider = GetComponent<BoxCollider>();
 
         Bounds bounds = bulletModel.GetComponent<VoxelModel>().GetBounds();
         boxCollider.center = bounds.center;
         boxCollider.size = bounds.size;
 	}
-	
-	// Update is called once per frame
-	void Update () {
-	
-	}
 
+    /// <summary>
+    /// Draws the bullet's collision point gizmo.
+    /// </summary>
 	void OnDrawGizmos()
 	{
 		Gizmos.color = Color.red;
@@ -43,6 +61,10 @@ public class Bullet : MonoBehaviour {
 		transform.position += velocity * Time.fixedDeltaTime;
 	}
 
+    /// <summary>
+    /// Bullet collision handler.
+    /// </summary>
+    /// <param name="other">Collider colliding with.</param>
 	void Explode(Collider other)
 	{
 		// Hit enemy

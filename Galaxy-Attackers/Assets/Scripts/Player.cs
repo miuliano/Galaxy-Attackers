@@ -3,10 +3,29 @@ using System.Collections;
 
 public class Player : MonoBehaviour {
 
+    /// <summary>
+    /// Horziontal speed of the player.
+    /// </summary>
     public float playerSpeed = 10.0f;
+
+    /// <summary>
+    /// Bounding box constraining player movement.
+    /// </summary>
 	public Bounds playerBounds = new Bounds(Vector3.zero, Vector3.one);
+
+    /// <summary>
+    /// Offset from which bullets are fired from.
+    /// </summary>
 	public Vector3 gunOffset = Vector3.zero;
-    public GameObject bullet;
+
+    /// <summary>
+    /// Reference to the bullet prefab.
+    /// </summary>
+    public Transform bullet;
+
+    /// <summary>
+    ///  Reference to the player voxel model.
+    /// </summary>
     public Transform playerModel;
 
     [ContextMenu("Preview")]
@@ -14,11 +33,6 @@ public class Player : MonoBehaviour {
     {
         playerModel.GetComponent<VoxelModel>().Initialize();
     }
-
-	// Use this for initialization
-	void Start () {
-	
-	}
 
 	void OnDrawGizmos() {
 		Gizmos.color = Color.blue;
@@ -49,7 +63,7 @@ public class Player : MonoBehaviour {
 		// Shoot button
 		if (fire1 == true && GameObject.FindGameObjectsWithTag("Bullet").Length == 0)
 		{
-			Instantiate(bullet, transform.position + gunOffset, Quaternion.identity);
+			Instantiate(bullet.gameObject, transform.position + gunOffset, Quaternion.identity);
 		}
 
 		// Transform to perspective projection

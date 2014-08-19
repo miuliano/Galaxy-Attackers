@@ -43,6 +43,9 @@ public class VoxelModel : MonoBehaviour {
         Initialize();
     }
 
+    /// <summary>
+    /// Initializes the voxel model.
+    /// </summary>
     public void Initialize ()
     {
         LoadVoxelData();
@@ -61,27 +64,7 @@ public class VoxelModel : MonoBehaviour {
             UpdateBoxCollider();
     }
 
-    private void UpdateBoxCollider()
-    {
-        BoxCollider boxCollider = GetComponent<BoxCollider>();
 
-		if (boxCollider == null) {
-			Debug.LogWarning("VoxelModel::UpdateBoxCollider(): No box collider component found.");
-			return;
-		}
-
-		// Place box collider origin at the centre of the model
-		if (centreOrigin)
-		{
-			boxCollider.center = Vector3.zero;
-		}
-		else 
-		{
-			boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
-		}
-
-        boxCollider.size   = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
-    }
 
     /// <summary>
     /// Returns the bounds of the voxel model.
@@ -353,6 +336,29 @@ public class VoxelModel : MonoBehaviour {
         mesh.Optimize();
         mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
+    }
+
+    private void UpdateBoxCollider()
+    {
+        BoxCollider boxCollider = GetComponent<BoxCollider>();
+
+        if (boxCollider == null)
+        {
+            Debug.LogWarning("VoxelModel::UpdateBoxCollider(): No box collider component found.");
+            return;
+        }
+
+        // Place box collider origin at the centre of the model
+        if (centreOrigin)
+        {
+            boxCollider.center = Vector3.zero;
+        }
+        else
+        {
+            boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
+        }
+
+        boxCollider.size = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
     }
 
 	// Use this for initialization

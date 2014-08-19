@@ -3,7 +3,7 @@ using System.Collections;
 
 public class ObjectFilter : MonoBehaviour {
 
-	public string tagFilter;
+	public string tagFilter = "";
 
 	void OnDrawGizmos()
 	{
