@@ -55,10 +55,10 @@ public class Bullet : MonoBehaviour {
 		Gizmos.DrawWireSphere(transform.position + hitOffset, 1.0f);
 	}
 
-	void FixedUpdate()
+	void Update()
 	{
 		// Move at a fixed velocity
-		transform.position += velocity * Time.fixedDeltaTime;
+		transform.position += velocity * Time.deltaTime;
 	}
 
     /// <summary>
@@ -83,6 +83,22 @@ public class Bullet : MonoBehaviour {
 				Destroy(gameObject);
 			}
 		}
+        // Hit building
+        else if (other.tag == "Building")
+        {
+            Building building = other.GetComponent<Building>();
+
+            Vector3 hitPoint = transform.position + hitOffset;
+
+            // Collision check
+            if (building.CheckCollision(hitPoint))
+            {
+                building.ExplodeAt(hitPoint, explosionForce, explosionRadius);
+
+                // Kill thyself
+                Destroy(gameObject);
+            }
+        }
 	}
 
 	void OnTriggerEnter(Collider other)

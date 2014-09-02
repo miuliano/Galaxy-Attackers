@@ -25,7 +25,12 @@ public class Alien : MonoBehaviour {
 
 	private int frameIndex = 0;
 	private float nextFrame = 0.0f;
+
     private BoxCollider boxCollider;
+
+    // Event handlers
+    public delegate void AlienEventHandler(Transform alien);
+    public event AlienEventHandler OnDestroy;
 
     [ContextMenu("Preview")]
     void Preview ()
@@ -41,7 +46,7 @@ public class Alien : MonoBehaviour {
         boxCollider = GetComponent<BoxCollider>();        
 	}
 	
-	void FixedUpdate()
+	void Update()
 	{
 		float frameTime = Time.time;
 
@@ -112,5 +117,11 @@ public class Alien : MonoBehaviour {
         }
 
         Destroy(gameObject);
+
+        // Trigger destroy event
+        if (OnDestroy != null)
+        {
+            OnDestroy(transform);
+        }
     }
 }
