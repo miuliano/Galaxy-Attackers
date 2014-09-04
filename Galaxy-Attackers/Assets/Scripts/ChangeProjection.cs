@@ -8,12 +8,19 @@ public class ChangeProjection : MonoBehaviour {
 	{
 		Perspective,
 		Orthographic,
-		InTransition
+		TransitionToPerspective,
+		TransitionToOrthographic
 	}
+
+	public ProjectionState startingState = ProjectionState.Orthographic;
 
     public float orthographicNear = 0.3f;
     public float orthographicFar  = 1000.0f;
     public float orthographicSize = 70.0f;
+
+	public float perspectiveFOV = 60.0f;
+	public float perspectiveNear = 0.3f;
+	public float perspectiveFar = 1000.0f;
 
     private Matrix4x4 ortho;
     private Matrix4x4 perspective;
@@ -23,15 +30,16 @@ public class ChangeProjection : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
         
-        perspective = camera.projectionMatrix;
-        
 		// Calculate aspect ratio
         aspect = (Screen.width + 0.0f) / (Screen.height + 0.0f);
+
+		// Create perspective projection
+		perspective = Matrix4x4.Perspective(perspectiveFOV, aspect, perspectiveNear, perspectiveFar);
 
 		// Create orthographic projection
         ortho = Matrix4x4.Ortho(-orthographicSize * aspect, orthographicSize * aspect, -orthographicSize, orthographicSize, orthographicNear, orthographicFar);
 
-		projectionState = ProjectionState.Perspective;
+		projectionState = startingState;
 	}
 
 	/// <summary>
@@ -96,7 +104,10 @@ public class ChangeProjection : MonoBehaviour {
 
     private void BlendProjection(ProjectionState state, float t)
     {
-		projectionState = ProjectionState.InTransition;
+		if (state == ProjectionState.Orthographic)
+			projectionState = ProjectionState.TransitionToOrthographic;
+		else if (state == ProjectionState.Perspective)
+			projectionState = ProjectionState.TransitionToPerspective;
 
         StopAllCoroutines();
         StartCoroutine(BlendCoroutine(state, t));

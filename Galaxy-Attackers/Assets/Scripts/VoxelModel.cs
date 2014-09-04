@@ -363,23 +363,7 @@ public class VoxelModel : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
-
-        // Load data if missing
-        if (voxelData == null)
-            LoadVoxelData();
-
-        // Create mesh if missing
-        if (mesh == null)
-        {
-            mesh = new Mesh();
-            mesh.name = "voxelMesh";
-            GetComponent<MeshFilter>().sharedMesh = mesh;
-
-            UpdateMesh();
-
-			if (updateBoxCollider)
-            	UpdateBoxCollider();
-        }
+		Initialize();
 	}
 	
 	// Update is called once per frame
