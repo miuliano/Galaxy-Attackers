@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Bullet : MonoBehaviour {
+public class PlayerBullet : MonoBehaviour {
 
     /// <summary>
     /// The velocity of the bullet.
@@ -67,8 +67,8 @@ public class Bullet : MonoBehaviour {
     /// <param name="other">Collider colliding with.</param>
 	void Explode(Collider other)
 	{
-		// Hit enemy
-		if (other.tag == "Enemy")
+		// Hit alien
+		if (other.tag == "Alien")
 		{
 			Alien enemy = other.GetComponent<Alien>();
 
@@ -99,6 +99,20 @@ public class Bullet : MonoBehaviour {
                 Destroy(gameObject);
             }
         }
+		else if (other.tag == "AlienBullet")
+		{
+			AlienBullet alienBullet = other.GetComponent<AlienBullet>();
+
+			Vector3 hitPoint = transform.position + hitOffset;
+
+			if (alienBullet.CheckCollision(hitPoint))
+			{
+				alienBullet.ExplodeAt(hitPoint, explosionForce, explosionRadius);
+
+				// Kill thyself
+				Destroy(gameObject);
+			}
+		}
 	}
 
 	void OnTriggerEnter(Collider other)

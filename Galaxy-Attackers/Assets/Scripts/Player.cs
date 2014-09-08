@@ -28,9 +28,12 @@ public class Player : MonoBehaviour {
     /// </summary>
     public Transform playerModel;
 
+	/// <summary>
+	/// Reference to the debris voxel model.
+	/// </summary>
 	public Transform debris;
 
-	public BoxCollider boxCollider;
+	private BoxCollider boxCollider;
 
 	// Event handlers
 	public delegate void PlayerEventHandler(Transform player);
@@ -78,7 +81,7 @@ public class Player : MonoBehaviour {
         }
 
 		// Shoot button
-		if (fire1 == true && GameObject.FindGameObjectsWithTag("Bullet").Length == 0)
+		if (fire1 == true && GameObject.FindGameObjectsWithTag("PlayerBullet").Length == 0)
 		{
 			Instantiate(bullet.gameObject, transform.position + gunOffset, Quaternion.identity);
 		}

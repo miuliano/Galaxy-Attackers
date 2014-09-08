@@ -32,6 +32,11 @@ public class AlienBullet : MonoBehaviour {
 	/// The animation delay.
 	/// </summary>
 	public float animationDelay = 0.5f;
+
+	/// <summary>
+	/// Reference to the debris voxel model.
+	/// </summary>
+	public Transform debris;
 	
 	private int frameIndex = 0;
 	private float nextFrame = 0.0f;
@@ -154,5 +159,35 @@ public class AlienBullet : MonoBehaviour {
 	void OnTriggerStay(Collider other)
 	{
 		Explode(other);
+	}
+
+	/// <summary>
+	/// Check for collision between a point and the bullet.
+	/// </summary>
+	/// <param name="position">Point in world coordinates.</param>
+	/// <returns>True on collision, false otherwise.</returns>
+	public bool CheckCollision(Vector3 position)
+	{
+		Vector3 localPos = bulletFrames[frameIndex].InverseTransformPoint(position);
+		return bulletFrames[frameIndex].GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
+	}
+
+	/// <summary>
+	/// Explodes the bullet into debris by a force at a given location.
+	/// </summary>
+	/// <param name="position">Location of the explosion force.</param>
+	/// <param name="force">Magnitude of the explosion force.</param>
+	/// <param name="radius">Radius of the explosion force.</param>
+	public void ExplodeAt(Vector3 position, float force, float radius)
+	{
+		VoxelModel vm = bulletFrames[frameIndex].GetComponent<VoxelModel>();
+		
+		foreach (Vector3 point in vm.ToPoints())
+		{
+			GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
+			go.rigidbody.AddExplosionForce(force, position, radius);
+		}
+		
+		Destroy(gameObject);
 	}
 }

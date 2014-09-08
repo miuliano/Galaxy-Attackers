@@ -18,6 +18,8 @@ public class AlienWave : MonoBehaviour {
 	/// </summary>
 	public float shootDelay = 10.0f;
 
+	public Vector3 shootOffset;
+
 	/// <summary>
 	/// Text file containing wave information.
 	/// </summary>
@@ -82,6 +84,9 @@ public class AlienWave : MonoBehaviour {
 		}
 
 		flagUpdateBounds = true;
+
+		nextShoot = shootDelay;
+		nextMove = moveDelay;
 	}
 
     // Alien death handler
@@ -230,7 +235,7 @@ public class AlienWave : MonoBehaviour {
 
 			int bulletIndex = Random.Range(0, bulletTypes.Length);
 
-			Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0);
+			Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0) + shootOffset;
 			bulletPos = transform.TransformPoint(bulletPos);
 
 			Instantiate(bulletTypes[bulletIndex], bulletPos, Quaternion.identity);

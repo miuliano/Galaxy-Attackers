@@ -3,7 +3,7 @@ using System.Collections;
 
 public class ObjectFilter : MonoBehaviour {
 
-	public string tagFilter = "";
+	public string[] tagFilter;
 
 	void OnDrawGizmos()
 	{
@@ -13,9 +13,13 @@ public class ObjectFilter : MonoBehaviour {
 
 	void OnTriggerEnter(Collider other)
 	{
-		if (other.tag == tagFilter)
+		foreach (string tag in tagFilter)
 		{
-			Destroy(other.gameObject);
+			if (other.tag == tag)
+			{
+				Destroy(other.gameObject);
+				return;
+			}
 		}
 	}
 }
