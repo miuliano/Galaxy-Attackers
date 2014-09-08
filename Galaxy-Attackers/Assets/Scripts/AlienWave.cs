@@ -191,7 +191,49 @@ public class AlienWave : MonoBehaviour {
 
 		if (frameTime > nextShoot)
 		{
-			Debug.Log("PEW PEW");
+			// Initialize 
+			int[] colSequence = new int[waveWidth];
+
+			for (int i = 0; i < waveWidth; i++)
+			{
+				colSequence[i] = i;
+			}
+
+			// Shuffle
+			for (int i = waveWidth - 1; i >= 1; i--)
+			{
+				int j = Random.Range(0, i + 1);
+				int temp = colSequence[i];
+				colSequence[i] = colSequence[j];
+				colSequence[j] = temp;
+			}
+
+			// Find lowest living alien - assumes at least one exists
+			int x = colSequence[0];
+			int y = 0;
+
+			for (; y < waveHeight; y++)
+			{
+				if (waveData[y * waveWidth + x] == -1)
+				{
+					break;
+				}
+			}
+
+			y--;
+
+			// Create bullet
+			float xScale = waveBounds.size.x / waveWidth;
+			float yScale = waveBounds.size.y / waveHeight;
+			float xOffset = waveBounds.size.x / 2.0f - (xScale / 2.0f);
+			float yOffset = waveBounds.size.y / 2.0f - (yScale / 2.0f);
+
+			int bulletIndex = Random.Range(0, bulletTypes.Length);
+
+			Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0);
+			bulletPos = transform.TransformPoint(bulletPos);
+
+			Instantiate(bulletTypes[bulletIndex], bulletPos, Quaternion.identity);
 
 			nextShoot = frameTime + shootDelay;
 		}

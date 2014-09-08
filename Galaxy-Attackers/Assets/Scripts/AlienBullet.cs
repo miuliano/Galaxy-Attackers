@@ -109,16 +109,20 @@ public class AlienBullet : MonoBehaviour {
 	void Explode(Collider other)
 	{
 		// Hit enemy
-		if (other.tag == "Enemy")
+		if (other.tag == "Player")
 		{
-			Alien enemy = other.GetComponent<Alien>();
+			Debug.Log("Player potential hit");
+
+			Player player = other.GetComponent<Player>();
 			
 			Vector3 hitPoint = transform.position + hitOffset;
 			
 			// Collision check
-			if (enemy.CheckCollision(hitPoint))
+			if (player.CheckCollision(hitPoint))
 			{
-				enemy.ExplodeAt(hitPoint, explosionForce, explosionRadius);				
+				Debug.Log("Player definite hit");
+
+				player.ExplodeAt(hitPoint, explosionForce, explosionRadius);				
 				
 				// Kill thyself
 				Destroy(gameObject);

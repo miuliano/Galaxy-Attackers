@@ -28,6 +28,14 @@ public class Player : MonoBehaviour {
     /// </summary>
     public Transform playerModel;
 
+	public Transform debris;
+
+	public BoxCollider boxCollider;
+
+	// Event handlers
+	public delegate void PlayerEventHandler(Transform player);
+	public event PlayerEventHandler OnDestroy;
+
     [ContextMenu("Preview")]
     void Preview()
     {
@@ -40,6 +48,15 @@ public class Player : MonoBehaviour {
 
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(transform.position + gunOffset, 1.0f);
+	}
+
+	void Start()
+	{
+		boxCollider = GetComponent<BoxCollider>();
+
+		Bounds bounds = playerModel.GetComponent<VoxelModel>().GetBounds();
+		boxCollider.center = bounds.center;
+		boxCollider.size = bounds.size;
 	}
 
 	// Update is called once per frame
@@ -76,6 +93,31 @@ public class Player : MonoBehaviour {
 		if (Input.GetKeyUp(KeyCode.O) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Perspective)
 		{
 			Camera.main.GetComponent<ChangeProjection>().ToOrthographic(1.0f);
+		}
+	}
+
+	public bool CheckCollision(Vector3 position)
+	{
+		Vector3 localPos = playerModel.InverseTransformPoint(position);
+		return playerModel.GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
+	}
+
+	public void ExplodeAt(Vector3 position, float force, float radius)
+	{
+		VoxelModel vm = playerModel.GetComponent<VoxelModel>();
+		
+		foreach (Vector3 point in vm.ToPoints())
+		{
+			GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
+			go.rigidbody.AddExplosionForce(force, position, radius);
+		}
+		
+		Destroy(gameObject);
+		
+		// Trigger destroy event
+		if (OnDestroy != null)
+		{
+			OnDestroy(transform);
 		}
 	}
 }
