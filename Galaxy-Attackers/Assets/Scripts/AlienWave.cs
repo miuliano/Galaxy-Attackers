@@ -89,7 +89,18 @@ public class AlienWave : MonoBehaviour {
 		nextMove = moveDelay;
 	}
 
-    // Alien death handler
+	void Shuffle(int[] list)
+	{
+		for (int i = list.Length - 1; i >= 1; i--)
+		{
+			int j = Random.Range(0, i + 1);
+			int temp = list[i];
+			list[i] = list[j];
+			list[j] = temp;
+		}
+	}
+	
+	// Alien death handler
     void alien_OnDestroy(Transform alien)
     {
 		// Hacky way to get coordinate and remove alien
@@ -102,6 +113,26 @@ public class AlienWave : MonoBehaviour {
         flagUpdateBounds = true;
 		waveAlive--;
     }
+	
+	/// <summary>
+	/// Gets the height (y-coordinate) of the lowest alien.
+	/// </summary>
+	/// <returns>The lowest alien height.</returns>
+	/// <param name="x">The x coordinate of the colunm.</param>
+	int GetLowestAlienHeight(int x)
+	{
+		int lowest = -1;
+
+		for (int y = 0; y < waveHeight; y++)
+		{
+			if (waveData[y * waveWidth + x] > -1)
+			{
+				lowest = y;
+			}
+		}
+
+		return lowest;
+	}
 
 	/// <summary>
 	/// Loads the wave data from the associated file.
@@ -196,49 +227,47 @@ public class AlienWave : MonoBehaviour {
 
 		if (frameTime > nextShoot)
 		{
-			// Initialize 
-			int[] colSequence = new int[waveWidth];
+			bool foundShootPoint = false;
+			int x = 0, y = 0;
 
-			for (int i = 0; i < waveWidth; i++)
+			// Create sequence of columns to check for shooting
+			int[] shootSequence = new int[waveWidth];
+
+			for (int i = 0; i < waveWidth; i++) shootSequence[i] = i;
+
+			Shuffle(shootSequence);
+
+			for (int i = 0; i < waveWidth && foundShootPoint == false; i++)
 			{
-				colSequence[i] = i;
-			}
+				x = shootSequence[i];
+				y = GetLowestAlienHeight(x);
 
-			// Shuffle
-			for (int i = waveWidth - 1; i >= 1; i--)
-			{
-				int j = Random.Range(0, i + 1);
-				int temp = colSequence[i];
-				colSequence[i] = colSequence[j];
-				colSequence[j] = temp;
-			}
-
-			// Find lowest living alien - assumes at least one exists
-			int x = colSequence[0];
-			int y = 0;
-
-			for (; y < waveHeight; y++)
-			{
-				if (waveData[y * waveWidth + x] == -1)
-				{
-					break;
+				if (y > -1) {
+					foundShootPoint = true;
 				}
+
+				Debug.Log("Checking column " + x + ": can shoot = " + foundShootPoint);
 			}
 
-			y--;
+			if (foundShootPoint)
+			{
+				// Create bullet
+				float xScale = waveBounds.size.x / waveWidth;
+				float yScale = waveBounds.size.y / waveHeight;
+				float xOffset = waveBounds.size.x / 2.0f - (xScale / 2.0f);
+				float yOffset = waveBounds.size.y / 2.0f - (yScale / 2.0f);
 
-			// Create bullet
-			float xScale = waveBounds.size.x / waveWidth;
-			float yScale = waveBounds.size.y / waveHeight;
-			float xOffset = waveBounds.size.x / 2.0f - (xScale / 2.0f);
-			float yOffset = waveBounds.size.y / 2.0f - (yScale / 2.0f);
+				int bulletIndex = Random.Range(0, bulletTypes.Length);
 
-			int bulletIndex = Random.Range(0, bulletTypes.Length);
+				Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0) + shootOffset;
+				bulletPos = transform.TransformPoint(bulletPos);
 
-			Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0) + shootOffset;
-			bulletPos = transform.TransformPoint(bulletPos);
-
-			Instantiate(bulletTypes[bulletIndex], bulletPos, Quaternion.identity);
+				Instantiate(bulletTypes[bulletIndex], bulletPos, Quaternion.identity);
+			}
+			else
+			{
+				Debug.Log("No aliens to shoot from");
+			}
 
 			nextShoot = frameTime + shootDelay;
 		}
