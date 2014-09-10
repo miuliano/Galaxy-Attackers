@@ -100,17 +100,6 @@ public class AlienWave : MonoBehaviour {
 		nextMove = moveDelay;
 	}
 
-	void Shuffle(int[] list)
-	{
-		for (int i = list.Length - 1; i >= 1; i--)
-		{
-			int j = Random.Range(0, i + 1);
-			int temp = list[i];
-			list[i] = list[j];
-			list[j] = temp;
-		}
-	}
-	
 	// Alien death handler
     void alien_OnDestroy(Transform alien)
     {
@@ -239,18 +228,17 @@ public class AlienWave : MonoBehaviour {
 
 			for (int i = 0; i < waveWidth; i++) shootSequence[i] = i;
 
-			Shuffle(shootSequence);
+			Utility.Shuffle<int>(shootSequence);
 
+			// Find a viable shooting point
 			for (int i = 0; i < waveWidth && foundShootPoint == false; i++)
 			{
 				x = shootSequence[i];
 				y = GetLowestAlienHeight(x);
 
-				if (y > -1) {
+				if (wave[y * waveWidth + x].alive) {
 					foundShootPoint = true;
 				}
-
-				Debug.Log("Checking column " + x + ": can shoot = " + foundShootPoint);
 			}
 
 			if (foundShootPoint)
@@ -264,13 +252,15 @@ public class AlienWave : MonoBehaviour {
 				int bulletIndex = Random.Range(0, bulletTypes.Length);
 
 				Vector3 bulletPos = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0) + shootOffset;
+
+				// Transform to world space
 				bulletPos = transform.TransformPoint(bulletPos);
 
 				Instantiate(bulletTypes[bulletIndex], bulletPos, Quaternion.identity);
 			}
 			else
 			{
-				Debug.Log("No aliens to shoot from");
+				Debug.Log("No aliens to shoot from. Game should be over ;)");
 			}
 
 			nextShoot = frameTime + shootDelay;
