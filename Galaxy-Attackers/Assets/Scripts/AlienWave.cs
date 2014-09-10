@@ -236,7 +236,7 @@ public class AlienWave : MonoBehaviour {
 				x = shootSequence[i];
 				y = GetLowestAlienHeight(x);
 
-				if (wave[y * waveWidth + x].alive) {
+				if (y >= 0) {
 					foundShootPoint = true;
 				}
 			}
