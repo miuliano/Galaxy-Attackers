@@ -414,12 +414,19 @@ public class VoxelModel : MonoBehaviour {
 		mesh.RecalculateBounds();
     }
 
+	/// <summary>
+	/// Draw a front facing quad.
+	/// </summary>
+	/// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
     private void QuadFront(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x    , y    , z    ));
-        vertices.Add(new Vector3(x + voxelSize, y, z));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z));
-        vertices.Add(new Vector3(x, y - voxelSize, z));
+		float halfSize = voxelSize / 2.0f;
+        vertices.Add(new Vector3(x + halfSize, y - halfSize, z - halfSize));
+        vertices.Add(new Vector3(x - halfSize, y - halfSize, z - halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z - halfSize));
+        vertices.Add(new Vector3(x + halfSize, y + halfSize, z - halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 1);
@@ -436,12 +443,19 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
+	/// <summary>
+	/// Draw a back facing quad.
+	/// </summary>
+	/// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
 	private void QuadBack(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x, y, z + voxelSize));
-        vertices.Add(new Vector3(x + voxelSize, y, z + voxelSize));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z + voxelSize));
-        vertices.Add(new Vector3(x, y - voxelSize, z + voxelSize));
+		float halfSize = voxelSize / 2.0f;
+		vertices.Add(new Vector3(x + halfSize, y - halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y - halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z + halfSize));
+		vertices.Add(new Vector3(x + halfSize, y + halfSize, z + halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 3);
@@ -461,15 +475,16 @@ public class VoxelModel : MonoBehaviour {
     /// <summary>
     /// Draw a top facing quad.
     /// </summary>
-    /// <param name="x">x-coordinate of the top left corner of the quad.</param>
-    /// <param name="y">y-coordinate of the top left corner of the quad.</param>
-    /// <param name="z">z-coordinate of the top left corner of the quad.</param>
+    /// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
 	private void QuadTop(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x, y, z));
-        vertices.Add(new Vector3(x + voxelSize, y, z));
-        vertices.Add(new Vector3(x + voxelSize, y, z + voxelSize));
-        vertices.Add(new Vector3(x, y, z + voxelSize));
+		float halfSize = voxelSize / 2.0f;
+		vertices.Add(new Vector3(x + halfSize, y + halfSize, z - halfSize));
+		vertices.Add(new Vector3(x + halfSize, y + halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z - halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 3);
@@ -486,12 +501,19 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
+	/// <summary>
+	/// Draw a bottom facing quad.
+	/// </summary>
+	/// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
 	private void QuadBottom(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x, y - voxelSize, z));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z + voxelSize));
-        vertices.Add(new Vector3(x, y - voxelSize, z + voxelSize));
+		float halfSize = voxelSize / 2.0f;
+		vertices.Add(new Vector3(x + halfSize, y - halfSize, z - halfSize));
+		vertices.Add(new Vector3(x + halfSize, y - halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y - halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y - halfSize, z - halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 1);
@@ -508,12 +530,19 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
+	/// <summary>
+	/// Draw a left facing quad.
+	/// </summary>
+	/// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
 	private void QuadLeft(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x, y, z));
-        vertices.Add(new Vector3(x, y, z + voxelSize));
-        vertices.Add(new Vector3(x, y - voxelSize, z + voxelSize));
-        vertices.Add(new Vector3(x, y - voxelSize, z));
+		float halfSize = voxelSize / 2.0f;
+		vertices.Add(new Vector3(x - halfSize, y - halfSize, z - halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z - halfSize));
+		vertices.Add(new Vector3(x - halfSize, y + halfSize, z + halfSize));
+		vertices.Add(new Vector3(x - halfSize, y - halfSize, z + halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 3);
@@ -530,12 +559,19 @@ public class VoxelModel : MonoBehaviour {
         quadCount += 1;
     }
 
+	/// <summary>
+	/// Draw a right facing quad.
+	/// </summary>
+	/// <param name="x">X component of the centre of the cube.</param>
+	/// <param name="y">Y component of the centre of the cube.</param>
+	/// <param name="z">Z component of the centre of the cube.</param>
     private void QuadRight(float x, float y, float z)
     {
-        vertices.Add(new Vector3(x + voxelSize, y, z));
-        vertices.Add(new Vector3(x + voxelSize, y, z + voxelSize));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z + voxelSize));
-        vertices.Add(new Vector3(x + voxelSize, y - voxelSize, z));
+		float halfSize = voxelSize / 2.0f;
+		vertices.Add(new Vector3(x + halfSize, y - halfSize, z - halfSize));
+		vertices.Add(new Vector3(x + halfSize, y + halfSize, z - halfSize));
+		vertices.Add(new Vector3(x + halfSize, y + halfSize, z + halfSize));
+		vertices.Add(new Vector3(x + halfSize, y - halfSize, z + halfSize));
 
         triangles.Add(quadCount * 4);
         triangles.Add(quadCount * 4 + 1);
