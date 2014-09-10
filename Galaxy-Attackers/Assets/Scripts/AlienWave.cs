@@ -29,9 +29,14 @@ public class AlienWave : MonoBehaviour {
 	public TextAsset waveFile;
 	
 	/// <summary>
-	/// The bounds in which the aliens can move in.
+	/// The size of the alien wave.
 	/// </summary>
-    public Bounds waveBounds;
+    public Vector3 waveSize;
+
+	/// <summary>
+	/// The bounds in which the wave can move.
+	/// </summary>
+	public Bounds moveBounds;
 
 	/// <summary>
 	/// List of available alien types.
@@ -54,7 +59,7 @@ public class AlienWave : MonoBehaviour {
     private Vector3 boundsOffset = new Vector3();
 
     private Vector3 horizontalMove = Vector3.right;
-    private Vector3 verticalMove   = Vector3.down;
+    private Vector3 verticalMove = Vector3.down;
 
     private float nextMove = 0.0f;
 	private float nextShoot = 0.0f;
@@ -68,10 +73,10 @@ public class AlienWave : MonoBehaviour {
 		wave = new Alien[waveHeight * waveWidth];
 
 		// Create aliens
-		float xScale = waveBounds.size.x / waveWidth;
-		float yScale = waveBounds.size.y / waveHeight;
-		float xOffset = waveBounds.size.x / 2.0f - (xScale / 2.0f);
-		float yOffset = waveBounds.size.y / 2.0f - (yScale / 2.0f);
+		float xScale = waveSize.x / waveWidth;
+		float yScale = waveSize.y / waveHeight;
+		float xOffset = waveSize.x / 2.0f - (xScale / 2.0f);
+		float yOffset = waveSize.y / 2.0f - (yScale / 2.0f);
 
 		for (int y = 0; y < waveHeight; y++)
 		{
@@ -190,7 +195,7 @@ public class AlienWave : MonoBehaviour {
 			
 			alienBounds.center = newPosition + boundsOffset;
 
-            if (BoundsContainsBounds(waveBounds, alienBounds))
+			if (BoundsContainsBounds(moveBounds, alienBounds))
             {
                 transform.position = newPosition;
             }
@@ -202,7 +207,7 @@ public class AlienWave : MonoBehaviour {
 
                 alienBounds.center = newPosition + boundsOffset;
 
-                if (BoundsContainsBounds(waveBounds, alienBounds))
+				if (BoundsContainsBounds(moveBounds, alienBounds))
                 {
                     transform.position = newPosition;
                 }
@@ -244,10 +249,10 @@ public class AlienWave : MonoBehaviour {
 			if (foundShootPoint)
 			{
 				// Create bullet
-				float xScale = waveBounds.size.x / waveWidth;
-				float yScale = waveBounds.size.y / waveHeight;
-				float xOffset = waveBounds.size.x / 2.0f - (xScale / 2.0f);
-				float yOffset = waveBounds.size.y / 2.0f - (yScale / 2.0f);
+				float xScale = waveSize.x / waveWidth;
+				float yScale = waveSize.y / waveHeight;
+				float xOffset = waveSize.x / 2.0f - (xScale / 2.0f);
+				float yOffset = waveSize.y / 2.0f - (yScale / 2.0f);
 
 				int bulletIndex = Random.Range(0, bulletTypes.Length);
 
@@ -321,11 +326,15 @@ public class AlienWave : MonoBehaviour {
     void OnDrawGizmos()
     {
 		// Draw wave bounds
+		Gizmos.color = Color.cyan;
+		Gizmos.DrawWireCube(transform.position, waveSize);
+
+		// Draw movement bounds
         Gizmos.color = Color.blue;
-        Gizmos.DrawWireCube(waveBounds.center, waveBounds.size);
+        Gizmos.DrawWireCube(moveBounds.center, moveBounds.size);
 
 		// Draw alien bounds
-        Gizmos.color = Color.cyan;
+		Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(alienBounds.center, alienBounds.size);
     }
 }
