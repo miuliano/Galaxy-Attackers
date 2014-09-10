@@ -4,6 +4,11 @@ using System.Collections;
 public class Alien : MonoBehaviour {
 
 	/// <summary>
+	/// The points scored for killing this alien.
+	/// </summary>
+	public int pointValue;
+
+	/// <summary>
 	/// List of children comprising the frames of this animation.
 	/// </summary>
 	public Transform[] frames;

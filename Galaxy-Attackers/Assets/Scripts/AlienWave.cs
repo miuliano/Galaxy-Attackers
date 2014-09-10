@@ -7,11 +7,16 @@ public class AlienWave : MonoBehaviour {
     /// Distance to move in each movement step.
     /// </summary>
     public float moveDistance = 1.0f;
+	
+	/// <summary>
+	/// The maximum move delay.
+	/// </summary>
+	public float maxMoveDelay = 1.0f;
 
-    /// <summary>
-    /// Time delay between movement steps.
-    /// </summary>
-    public float moveDelay = 1.0f;
+	/// <summary>
+	/// The minimum move delay.
+	/// </summary>
+	public float minMoveDelay = 0.5f;
 
 	/// <summary>
 	/// Time delay between alien shots.
@@ -54,6 +59,7 @@ public class AlienWave : MonoBehaviour {
 	private int waveWidth = 0;
 	private int waveHeight = 0;
 	private int waveAlive = 0;
+	private int maxWaveAlive = 0;
 
     private Bounds alienBounds = new Bounds();
     private Vector3 boundsOffset = new Vector3();
@@ -61,8 +67,11 @@ public class AlienWave : MonoBehaviour {
     private Vector3 horizontalMove = Vector3.right;
     private Vector3 verticalMove = Vector3.down;
 
+	public float moveDelay = 1.0f;
     private float nextMove = 0.0f;
 	private float nextShoot = 0.0f;
+
+	private ScoreManager scoreManager;
 
     private bool flagUpdateBounds = false;
 
@@ -99,17 +108,31 @@ public class AlienWave : MonoBehaviour {
 			}
 		}
 
-		flagUpdateBounds = true;
+		maxWaveAlive = waveAlive;
 
+		moveDelay = maxMoveDelay;
 		nextShoot = shootDelay;
 		nextMove = moveDelay;
+
+		scoreManager = GameObject.FindObjectOfType<ScoreManager>();
+
+		flagUpdateBounds = true;
 	}
 
 	// Alien death handler
     void alien_OnDestroy(Transform alien)
     {
-        flagUpdateBounds = true;
+		// Give em points
+		int points = alien.GetComponent<Alien>().pointValue;
+
+		scoreManager.GainPoints(points);
+
+		// Linearly interpolate between max and min move delay based on aliens left
+		moveDelay = (maxMoveDelay - minMoveDelay) * (waveAlive / (float)maxWaveAlive) + minMoveDelay;
+
 		waveAlive--;
+
+		flagUpdateBounds = true;
     }
 	
 	/// <summary>
