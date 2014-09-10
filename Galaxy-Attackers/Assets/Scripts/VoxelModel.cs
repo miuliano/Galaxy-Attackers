@@ -31,6 +31,10 @@ public class VoxelModel : MonoBehaviour {
 		}
 	}
 
+    /// <summary>
+    /// Gets or sets a value indicating whether this instance is hidden.
+    /// </summary>
+    /// <value><c>true</c> if this instance is hidden; otherwise, <c>false</c>.</value>
 	public bool hidden
 	{
 		get
@@ -73,6 +77,7 @@ public class VoxelModel : MonoBehaviour {
         Initialize();
     }
 	
+    // Initialize before start(s) are called
 	void Awake () {
 		Initialize();
 	}
@@ -142,7 +147,7 @@ public class VoxelModel : MonoBehaviour {
 		}
 
 		// Slurp and split
-        string text    = voxelFile.text;
+        string text = voxelFile.text;
         string[] lines = text.Split(new char[] {'\r','\n'});
 
         volumeWidth = 0;
@@ -156,16 +161,19 @@ public class VoxelModel : MonoBehaviour {
 
             if (volumeWidth == 0)
             {
+                // Assume first line is width
                 volumeWidth = int.Parse(line);
             }
             else if (volumeHeight == 0)
             {
+                // Assume second line is height
                 volumeHeight = int.Parse(line);
 
                 voxelData = new int[volumeWidth * volumeHeight];
             }
             else
             {
+                // Assume remaining data are voxel rows
                 string[] voxels = line.Split(new char[] { ' ' });
 
                 foreach (string voxel in voxels)
@@ -181,45 +189,92 @@ public class VoxelModel : MonoBehaviour {
         }
     }
 
+    /// <summary>
+    /// Convert a point in world space to voxel space.
+    /// </summary>
+    /// <param name="point">Point in world space.</param>
+    /// <returns>Point in voxel space.</returns>
+    public IntVector2 WorldToVoxelSpace(Vector3 point)
+    {
+        Vector3 offset = Vector3.zero;
+
+        if (centreOrigin)
+        {
+            offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+        }
+
+        // Convert to voxel coordinates
+        Vector3 voxPoint = (point - offset) / voxelSize;
+
+        int x = Mathf.FloorToInt(voxPoint.x);
+        int y = (-Mathf.FloorToInt(voxPoint.y)) - 1;
+
+        return new IntVector2(x, y);
+    }
+
+    /// <summary>
+    /// Convert a point in voxel space to world space.
+    /// </summary>
+    /// <param name="point">Point in voxel space.</param>
+    /// <returns>Point in world space.</returns>
+    public Vector3 VoxelToWorldSpace(IntVector2 point)
+    {
+        return VoxelToWorldSpace(point.x, point.y);
+    }
+
+    /// <summary>
+    /// Convert a point in voxel space to world space.
+    /// </summary>
+    /// <param name="x">X component of the point.</param>
+    /// <param name="y">Y component of the point.</param>
+    /// <returns>Point in world space.</returns>
+    public Vector3 VoxelToWorldSpace(int x, int y)
+    {
+        Vector3 offset = Vector3.zero;
+
+        if (centreOrigin)
+        {
+            offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
+        }
+
+        return new Vector3(x * voxelSize + voxelSize / 2.0f + offset.x, -y * voxelSize - voxelSize / 2.0f + offset.y, voxelSize / 2.0f + offset.z);
+    }
+
+    /// <summary>
+    /// Return the value of a voxel at a given point.
+    /// </summary>
+    /// <param name="point">Point in world space.</param>
+    /// <returns>The value of the voxel.</returns>
+    public int GetVoxel(Vector3 point)
+    {
+        return GetVoxel(WorldToVoxelSpace(point));
+    }
+
 	/// <summary>
 	/// Return the value of a voxel at a given point.
 	/// </summary>
-	/// <returns>The value of the voxel.</returns>
-	/// <param name="point">Point in local coordinates.</param>
-    public int GetVoxel(Vector3 point)
+	/// <param name="point">Point in voxel space.</param>
+    /// <returns>The value of the voxel.</returns>
+    public int GetVoxel(IntVector2 point)
     {
-		// Check voxel data has been loaded
-		if (voxelData == null)
-		{
-			Debug.LogWarning("VoxelModel::GetVoxel(): voxelData is null.");
-			return -1;
-		}
+        return GetVoxel(point.x, point.y);
+    }
 
-		Vector3 offset = Vector3.zero;
-
-		if (centreOrigin)
-		{
-			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
-		}
-
-		// Convert to voxel coordinates
-		Vector3 voxPoint = (point - offset) / voxelSize;
-
-		int x = Mathf.FloorToInt(voxPoint.x);
-		int y = (-Mathf.FloorToInt(voxPoint.y)) - 1;
-		
-		// Bounds check
-        if (y * volumeWidth + x >= voxelData.Length || x < 0 || y < 0)
+    /// <summary>
+    /// Returns the value of a voxel at a given point.
+    /// </summary>
+    /// <param name="x">X component of the point in voxel space.</param>
+    /// <param name="y">Y component of the point in voxel space.</param>
+    /// <returns>The value of the voxel.</returns>
+    public int GetVoxel(int x, int y)
+    {
+        // Bounds check
+        if (x < 0 || x >= volumeWidth ||
+            y < 0 || y >= volumeHeight)
         {
-			Debug.LogWarning("VoxelModel::GetVoxel(): Out of bounds\r\n" +
-			                 "\tInput: " + point.ToString() + "\r\n" +
-			                 "\tvoxPoint: " + voxPoint.ToString() + "\r\n" +
-			                 "\tvolumeWidth: " + volumeWidth + "\r\n" +
-			                 "\tvolumeHeight: " + volumeHeight + "\r\n" +
-			                 "\tx: " + x + "\r\n" + 
-			                 "\ty: " + y + "\r\n" +
-			                 "\tIndex: " + (y * volumeWidth + x));
-			                 return -1;
+            Debug.LogWarning("VoxelModel::GetVoxel(): Out of bounds");
+
+            return -1;
         }
 
         return voxelData[y * volumeWidth + x];
@@ -228,34 +283,37 @@ public class VoxelModel : MonoBehaviour {
 	/// <summary>
 	/// Set the value of a voxel.
 	/// </summary>
-	/// <param name="point">Local point to set the voxel at.</param>
+	/// <param name="point">Point in world space.</param>
 	/// <param name="value">Value of the voxel.</param>
     public void SetVoxel(Vector3 point, int value)
+    {        
+        SetVoxel(WorldToVoxelSpace(point), value);
+    }
+
+    /// <summary>
+    /// Set the value of a voxel.
+    /// </summary>
+    /// <param name="point">Point in voxel space.</param>
+    /// <param name="value">Value of the voxel.</param>
+    public void SetVoxel(IntVector2 point, int value)
     {
-		// Check voxel data exists
-		if (voxelData == null)
-		{
-			Debug.LogWarning("VoxelModel::SetVoxel(): voxelData is null.");
-			return;
-		}
+        SetVoxel(point.x, point.y, value);
+    }
 
-		Vector3 offset = Vector3.zero;
-		
-		if (centreOrigin)
-		{
-			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
-		}
-		
-		// Convert to voxel coordinates
-		Vector3 voxPoint = (point - offset) / voxelSize;
-		
-		int x = Mathf.FloorToInt(voxPoint.x);
-		int y = (-Mathf.FloorToInt(voxPoint.y)) - 1;
-
-		// Bounds check, as well as point in range check
-        if (y * volumeWidth + x >= voxelData.Length || x < 0 || y < 0)
+    /// <summary>
+    /// Set the value of a voxel.
+    /// </summary>
+    /// <param name="x">X component of the point in voxel space.</param>
+    /// <param name="y">Y component of the point in voxel space.</param>
+    /// <param name="value">Value of the voxel.</param>
+    public void SetVoxel(int x, int y, int value)
+    {
+        // Bounds check
+        if (x < 0 || x >= volumeWidth ||
+            y < 0 || y >= volumeHeight)
         {
-            Debug.LogWarning("VoxelModel::SetVoxel(): Out of bounds.");
+            Debug.LogWarning("VoxelModel::SetVoxel(): Out of bounds");
+
             return;
         }
 
@@ -272,13 +330,6 @@ public class VoxelModel : MonoBehaviour {
 	{
 		Vector3[] points = new Vector3[voxelCount];
 
-		Vector3 offset = Vector3.zero;
-
-		if (centreOrigin)
-		{
-			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
-		}
-
 		int index = 0;
 		int x = 0, y = 0;
 		
@@ -286,9 +337,9 @@ public class VoxelModel : MonoBehaviour {
 		{
 			for (x = 0; x < volumeWidth; x++)
 			{
-				if (voxelData[y * volumeWidth + x] == 1)
+				if (voxelData[y * volumeWidth + x] > 0)
 				{
-					points[index] = new Vector3(x * voxelSize + voxelSize / 2.0f + offset.x, -y * voxelSize - voxelSize / 2.0f + offset.y,  voxelSize / 2.0f + offset.z);
+                    points[index] = VoxelToWorldSpace(x, y);
 					index++;
 				}
 			}
@@ -315,14 +366,6 @@ public class VoxelModel : MonoBehaviour {
         triangles.Clear();
         uvs.Clear();
 
-		Vector3 offset = Vector3.zero;
-
-		// Place origin at the centre of the model
-		if (centreOrigin)
-		{
-			offset = new Vector3(-voxelSize * volumeWidth / 2.0f, voxelSize * volumeHeight / 2.0f, -voxelSize / 2.0f);
-		}
-
         int x = 0, y = 0;
 
         for (; y < volumeHeight; y++)
@@ -330,29 +373,31 @@ public class VoxelModel : MonoBehaviour {
             for (x = 0; x < volumeWidth; x++)
             {
                 // Handle filled voxels
-                if (voxelData[y * volumeWidth + x] == 1)
+                if (voxelData[y * volumeWidth + x] > 0)
                 {
+                    Vector3 point = VoxelToWorldSpace(x, y);
+
                     // Always draw front
-					QuadFront(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+                    QuadFront(point.x, point.y, point.z);
 					
 					// Always draw back
-					QuadBack(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+                    QuadBack(point.x, point.y, point.z);
 
                     // Left-quad
                     if (x == 0 || (x > 0 && voxelData[y * volumeWidth + x - 1] == 0))
-						QuadLeft(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+                        QuadLeft(point.x, point.y, point.z);
 
                     // Right-quad
                     if (x == volumeWidth - 1 || (x < volumeWidth - 1 && voxelData[y * volumeWidth + x + 1] == 0))
-                        QuadRight(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+                        QuadRight(point.x, point.y, point.z);
 
                     // Top-quad
                     if (y == 0 || (y > 0 && voxelData[(y - 1) * volumeWidth + x] == 0))
-                        QuadTop(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);
+                        QuadTop(point.x, point.y, point.z);
 
                     // Bottom-quad
                     if (y == volumeHeight - 1 || (y < volumeHeight - 1 && voxelData[(y + 1) * volumeWidth + x] == 0))
-                        QuadBottom(x * voxelSize + offset.x, -y * voxelSize + offset.y, offset.z);   
+                        QuadBottom(point.x, point.y, point.z);   
 
 					voxelCount++;
                 }

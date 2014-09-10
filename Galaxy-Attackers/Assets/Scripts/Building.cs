@@ -13,6 +13,8 @@ public class Building : MonoBehaviour {
     /// </summary>
     public Transform debris;
 
+    public float destroyRadius = 1.0f;
+
     private BoxCollider boxCollider;
 
     [ContextMenu("Preview")]
@@ -52,12 +54,30 @@ public class Building : MonoBehaviour {
     {
         VoxelModel vm = buildingModel.GetComponent<VoxelModel>();
 
-        foreach (Vector3 point in vm.ToPoints())
-        {
-            GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
-            go.rigidbody.AddExplosionForce(force, position, radius);
-        }
+        Vector3 localPoint = vm.transform.InverseTransformPoint(position);
+        IntVector2 voxelPoint = vm.WorldToVoxelSpace(localPoint);
 
-        Destroy(gameObject);
+        // Magic explosion radius
+        const int voxelRadius = 6;
+
+        // Check 9x9 grid around colliding voxel
+        for (int y = -voxelRadius; y <= voxelRadius; y++)
+        {
+            for (int x = -voxelRadius; x <= voxelRadius; x++)
+            {
+                if (vm.GetVoxel(voxelPoint.x + x, voxelPoint.y + y) > 0 &&
+                    (Random.value >= (x * x + y * y) * (1.0f / (2 * voxelRadius * voxelRadius)) || (x == 0 && y == 0)))
+                {
+                    // Convert voxel coordinate to world space
+                    Vector3 worldPoint = vm.transform.TransformPoint(vm.VoxelToWorldSpace(voxelPoint.x + x, voxelPoint.y + y));
+
+                    GameObject go = Instantiate(debris.gameObject, worldPoint, Quaternion.identity) as GameObject;
+
+                    go.rigidbody.AddExplosionForce(force, position, radius);
+
+                    vm.SetVoxel(voxelPoint.x + x, voxelPoint.y + y, 0);
+                }
+            }
+        }
     }
 }
