@@ -18,6 +18,9 @@ public class AlienWave : MonoBehaviour {
 	/// </summary>
 	public float shootDelay = 10.0f;
 
+	/// <summary>
+	/// The offset from the alien position that is shooting.
+	/// </summary>
 	public Vector3 shootOffset;
 
 	/// <summary>
@@ -40,6 +43,8 @@ public class AlienWave : MonoBehaviour {
 	/// </summary>
 	public Transform[] bulletTypes;
 
+	private Alien[] wave;
+
 	private int[] waveData;
 	private int waveWidth = 0;
 	private int waveHeight = 0;
@@ -60,6 +65,8 @@ public class AlienWave : MonoBehaviour {
 	{
 		LoadWaveData();
 
+		wave = new Alien[waveHeight * waveWidth];
+
 		// Create aliens
 		float xScale = waveBounds.size.x / waveWidth;
 		float yScale = waveBounds.size.y / waveHeight;
@@ -72,12 +79,16 @@ public class AlienWave : MonoBehaviour {
 			{
 				int alienIndex = waveData[y * waveWidth + x];
 
-				GameObject alien = Instantiate(alienTypes[alienIndex].gameObject) as GameObject;
+				GameObject alienGameObject = Instantiate(alienTypes[alienIndex].gameObject) as GameObject;
 
-				alien.name = x + ":" + y;
-				alien.transform.parent = this.transform;
-				alien.transform.localPosition = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0);
-				alien.GetComponent<Alien>().OnDestroy += alien_OnDestroy;
+				alienGameObject.name = "Alien_" + x + ":" + y;
+				alienGameObject.transform.parent = this.transform;
+				alienGameObject.transform.localPosition = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0);
+
+				Alien alien = alienGameObject.GetComponent<Alien>();
+
+				alien.OnDestroy += alien_OnDestroy;
+				wave[y * waveWidth + x] = alien;
 
 				waveAlive++;
 			}
@@ -103,13 +114,6 @@ public class AlienWave : MonoBehaviour {
 	// Alien death handler
     void alien_OnDestroy(Transform alien)
     {
-		// Hacky way to get coordinate and remove alien
-		string[] strCoords = alien.name.Split(new char[]{':'});
-		int x = int.Parse(strCoords[0]);
-		int y = int.Parse(strCoords[1]);
-		waveData[y * waveWidth + x] = -1;
-		Debug.Log(string.Format("Alien at {0},{1} dieded", x, y));
-
         flagUpdateBounds = true;
 		waveAlive--;
     }
@@ -125,7 +129,7 @@ public class AlienWave : MonoBehaviour {
 
 		for (int y = 0; y < waveHeight; y++)
 		{
-			if (waveData[y * waveWidth + x] > -1)
+			if (wave[y * waveWidth + x].alive)
 			{
 				lowest = y;
 			}
@@ -280,6 +284,7 @@ public class AlienWave : MonoBehaviour {
             flagUpdateBounds = false;
 
             alienBounds = GetBounds();
+
             boundsOffset = alienBounds.center - transform.position;
         }
     }
@@ -297,47 +302,30 @@ public class AlienWave : MonoBehaviour {
         return true;
     }
 
-    Bounds GetBounds(Transform parent)
-    {
-        Bounds bounds = new Bounds();
- 
-        foreach (Transform child in parent)
-        {
-            // Skip self and avoid adding empty bounds
-            if (parent.renderer != child.renderer && child.renderer.bounds.extents != Vector3.zero)
-            {                
-                if (bounds.extents == Vector3.zero)
-                {             
-                    bounds = child.renderer.bounds;
-                }                
-                else
-                {                    
-                    bounds.Encapsulate(child.renderer.bounds);
-                }
-            }
-
-            // Recursively retrieve bounds
-            Bounds childBounds = GetBounds(child);
-
-            if (childBounds.extents != Vector3.zero)
-            {
-                if (bounds.extents == Vector3.zero)
-                {
-                    bounds = childBounds;
-                }
-                else
-                {
-                    bounds.Encapsulate(childBounds);
-                }
-            }
-        }
-
-        return bounds;
-    }
-
+	/// <summary>
+	/// Return the bounds of living alien models.
+	/// </summary>
+	/// <returns>The model bounds.</returns>
     Bounds GetBounds()
     {
-        return GetBounds(transform);
+		Bounds bounds = new Bounds();
+
+		foreach (Alien alien in wave)
+		{
+			if (alien.alive)
+			{
+				if (bounds.extents == Vector3.zero)
+				{
+					bounds = alien.GetBounds();
+				}
+				else
+				{
+					bounds.Encapsulate(alien.GetBounds());
+				}
+			}
+		}
+
+		return bounds;
     }
 
     void OnDrawGizmos()

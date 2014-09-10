@@ -15,14 +15,42 @@ public class VoxelModel : MonoBehaviour {
     public float voxelSize = 1.0f;
 
 	/// <summary>
-	/// If set, updates the attached box collider when generated.
-	/// </summary>
-    public bool updateBoxCollider = false;
-
-	/// <summary>
 	/// If set, positions the origin at the centre of the model.
 	/// </summary>
 	public bool centreOrigin = false;
+
+	/// <summary>
+	/// Gets a value indicating whether this instance has loaded.
+	/// </summary>
+	/// <value><c>true</c> if this instance has loaded; otherwise, <c>false</c>.</value>
+	public bool loaded
+	{
+		get
+		{
+			return isLoaded;
+		}
+	}
+
+	public bool hidden
+	{
+		get
+		{
+			return isHidden;
+		}
+		set
+		{
+			if (value == true)
+			{
+				renderer.enabled = false;
+			}
+			else
+			{
+				renderer.enabled = true;
+			}
+
+			isHidden = value;
+		}
+	}
 
     private int[] voxelData;
     private int volumeWidth;
@@ -35,6 +63,8 @@ public class VoxelModel : MonoBehaviour {
     private List<int> triangles = new List<int>();
     private List<Vector2> uvs = new List<Vector2>();
 
+	private bool isLoaded = false;
+	private bool isHidden = true;
     private bool flagUpdate = false;
 
     [ContextMenu ("Preview")]
@@ -42,6 +72,10 @@ public class VoxelModel : MonoBehaviour {
     {
         Initialize();
     }
+	
+	void Awake () {
+		Initialize();
+	}
 
     /// <summary>
     /// Initializes the voxel model.
@@ -60,12 +94,19 @@ public class VoxelModel : MonoBehaviour {
 
         UpdateMesh();
 
-        if (updateBoxCollider)
-            UpdateBoxCollider();
+		isLoaded = true;
     }
 
-
-
+	// Update is called once per frame
+	void Update () {
+		if (flagUpdate == true)
+		{
+			flagUpdate = false;
+			
+			UpdateMesh();
+		}
+	}
+	
     /// <summary>
     /// Returns the bounds of the voxel model.
     /// </summary>
@@ -88,16 +129,6 @@ public class VoxelModel : MonoBehaviour {
 
         return bounds;
     }
-
-	/// <summary>
-	/// Load voxel data from a file.
-	/// </summary>
-	/// <param name="file">File containing voxel data</param>
-	public void LoadVoxelData(TextAsset file)
-	{
-		voxelFile = file;
-		LoadVoxelData();
-	}
 
 	/// <summary>
 	/// Load voxel data from the current file.
@@ -337,47 +368,6 @@ public class VoxelModel : MonoBehaviour {
         mesh.RecalculateNormals();
 		mesh.RecalculateBounds();
     }
-
-    private void UpdateBoxCollider()
-    {
-        BoxCollider boxCollider = GetComponent<BoxCollider>();
-
-        if (boxCollider == null)
-        {
-            Debug.LogWarning("VoxelModel::UpdateBoxCollider(): No box collider component found.");
-            return;
-        }
-
-        // Place box collider origin at the centre of the model
-        if (centreOrigin)
-        {
-            boxCollider.center = Vector3.zero;
-        }
-        else
-        {
-            boxCollider.center = new Vector3(boxCollider.size.x / 2.0f, -boxCollider.size.y / 2.0f, boxCollider.size.z / 2.0f);
-        }
-
-        boxCollider.size = new Vector3(volumeWidth * voxelSize, volumeHeight * voxelSize, voxelSize);
-    }
-
-	// Use this for initialization
-	void Start () {
-		Initialize();
-	}
-	
-	// Update is called once per frame
-	void Update () {
-        if (flagUpdate == true)
-        {
-            flagUpdate = false;
-
-            UpdateMesh();
-
-			if (updateBoxCollider)
-            	UpdateBoxCollider();
-        }
-	}
 
     private void QuadFront(float x, float y, float z)
     {

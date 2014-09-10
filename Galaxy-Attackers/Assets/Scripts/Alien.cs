@@ -2,26 +2,35 @@
 using System.Collections;
 
 public class Alien : MonoBehaviour {
+
+	/// <summary>
+	/// List of children comprising the frames of this animation.
+	/// </summary>
+	public Transform[] frames;
+
+	/// <summary>
+	/// Time delay between voxel animation frames.
+	/// </summary>
+	public float animationDelay = 0.5f;
 	
-    /// <summary>
-    /// Reference to the first frame of the voxel animation.
-    /// </summary>
-	public Transform frame0;
-
-    /// <summary>
-    /// Reference to the second frame of the voxel animation.
-    /// </summary>
-	public Transform frame1;
-
     /// <summary>
     /// Reference to the debris voxel model.
     /// </summary>
     public Transform debris;
 
-    /// <summary>
-    /// Time delay between voxel animation frames.
-    /// </summary>
-	public float animationDelay = 0.5f;
+	/// <summary>
+	/// Gets a value indicating whether this <see cref="Alien"/> is alive.
+	/// </summary>
+	/// <value><c>true</c> if alive; otherwise, <c>false</c>.</value>
+	public bool alive
+	{
+		get 
+		{
+			return isAlive;
+		}
+	}
+
+	private bool isAlive = true;
 
 	private int frameIndex = 0;
 	private float nextFrame = 0.0f;
@@ -35,45 +44,35 @@ public class Alien : MonoBehaviour {
     [ContextMenu("Preview")]
     void Preview ()
     {
-        frame0.GetComponent<VoxelModel>().Initialize();
+        frames[0].GetComponent<VoxelModel>().Initialize();
     }
 
 	// Use this for initialization
 	void Start () {
 		frameIndex = 0;
-        nextFrame = 0.0f;
+		nextFrame = 0.0f;
 
-        boxCollider = GetComponent<BoxCollider>();        
+		boxCollider = GetComponent<BoxCollider>();
+
+		Bounds bounds = frames[0].GetComponent<VoxelModel>().GetBounds();
+		boxCollider.center = bounds.center;
+		boxCollider.size = bounds.size;
 	}
 	
 	void Update()
 	{
 		float frameTime = Time.time;
 
-		if (frameTime > nextFrame)
+		if (frameTime > nextFrame && isAlive)
 		{
-			if (frameIndex == 0)
-			{
-				frame0.gameObject.SetActive(true);
-				frame1.gameObject.SetActive(false);
+			frames[frameIndex].gameObject.SetActive(true);
+			frames[(frameIndex - 1 >= 0 ? frameIndex - 1 : frames.Length - 1)].gameObject.SetActive(false); 
 
-                Bounds bounds = frame0.GetComponent<VoxelModel>().GetBounds();
-                boxCollider.center = bounds.center;
-                boxCollider.size = bounds.size;
+			Bounds bounds = frames[frameIndex].GetComponent<VoxelModel>().GetBounds();
+			boxCollider.center = bounds.center;
+			boxCollider.size = bounds.size;
 
-				frameIndex = 1;
-			}
-			else if (frameIndex == 1)
-			{
-				frame0.gameObject.SetActive(false);
-				frame1.gameObject.SetActive(true);
-
-                Bounds bounds = frame1.GetComponent<VoxelModel>().GetBounds();
-                boxCollider.center = bounds.center;
-                boxCollider.size = bounds.size;
-
-				frameIndex = 0;
-			}
+			frameIndex = (frameIndex + 1 <= frames.Length - 1 ? frameIndex + 1 : 0);
 
 			nextFrame = frameTime + animationDelay;
 		}
@@ -86,19 +85,20 @@ public class Alien : MonoBehaviour {
     /// <returns>True on collision, false otherwise.</returns>
     public bool CheckCollision(Vector3 position)
     {
-        if (frameIndex == 0)
-        {
-            Vector3 localPos = frame0.InverseTransformPoint(position);
-            return frame0.GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
-        }
-        else if (frameIndex == 1)
-        {
-            Vector3 localPos = frame0.InverseTransformPoint(position);
-            return frame1.GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
-        }
+		if (isAlive == false) return false;
 
-        return false;
+	    Vector3 localPos = frames[frameIndex].InverseTransformPoint(position);
+		return frames[frameIndex].GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
     }
+
+	/// <summary>
+	/// Returns the bounds of the alien.
+	/// </summary>
+	/// <returns>The alien's bounds.</returns>
+	public Bounds GetBounds()
+	{
+		return boxCollider.bounds;
+	}
 
     /// <summary>
     /// Explodes the alien into debris by a force at a given location.
@@ -108,7 +108,7 @@ public class Alien : MonoBehaviour {
     /// <param name="radius">Radius of the explosion force.</param>
     public void ExplodeAt(Vector3 position, float force, float radius)
     {
-        VoxelModel vm = (frameIndex == 0) ? frame0.GetComponent<VoxelModel>() : frame1.GetComponent<VoxelModel>();
+		VoxelModel vm = frames[frameIndex].GetComponent<VoxelModel>();
 
         foreach (Vector3 point in vm.ToPoints())
         {
@@ -116,7 +116,16 @@ public class Alien : MonoBehaviour {
             go.rigidbody.AddExplosionForce(force, position, radius);
         }
 
-        Destroy(gameObject);
+		isAlive = false;
+
+		// Hide frames
+		foreach (Transform frame in frames)
+		{
+			frame.GetComponent<VoxelModel>().hidden = true;
+		}
+
+		// Turn off collisions
+		boxCollider.enabled = false;
 
         // Trigger destroy event
         if (OnDestroy != null)
