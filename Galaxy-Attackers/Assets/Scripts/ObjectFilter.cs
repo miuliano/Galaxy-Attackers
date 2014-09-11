@@ -5,6 +5,14 @@ public class ObjectFilter : MonoBehaviour {
 
 	public string[] tagFilter;
 
+    void Start()
+    {
+        Vector3 screenPoint = Camera.main.ViewportToWorldPoint(new Vector3(1, 0, 0)) - Camera.main.transform.position;
+        BoxCollider boxCollider = GetComponent<BoxCollider>();
+
+        boxCollider.size = new Vector3(screenPoint.x * 2.0f, boxCollider.size.y, boxCollider.size.z);
+    }
+
 	void OnDrawGizmos()
 	{
 		Gizmos.color = Color.green;

@@ -4,10 +4,15 @@ using System.Collections;
 public class AlienWave : MonoBehaviour {
 
     /// <summary>
-    /// Distance to move in each movement step.
+    /// Distance to move horizontally in each movement step.
     /// </summary>
-    public float moveDistance = 1.0f;
-	
+    public float horizontalMoveDistance = 1.0f;
+
+    /// <summary>
+    /// Distance to move horizontally in each movement step.
+    /// </summary>
+    public float verticalMoveDistance = 4.0f;
+
 	/// <summary>
 	/// The maximum move delay.
 	/// </summary>
@@ -64,8 +69,8 @@ public class AlienWave : MonoBehaviour {
     private Bounds alienBounds = new Bounds();
     private Vector3 boundsOffset = new Vector3();
 
-    private Vector3 horizontalMove = Vector3.right;
-    private Vector3 verticalMove = Vector3.down;
+    private Vector3 horizontalMoveDirection = Vector3.right;
+    private Vector3 verticalMoveDirection = Vector3.down;
 
 	public float moveDelay = 1.0f;
     private float nextMove = 0.0f;
@@ -214,7 +219,7 @@ public class AlienWave : MonoBehaviour {
 		if (frameTime > nextMove)
 		{
 			// Try horizontal movement
-			Vector3 newPosition = transform.position + horizontalMove * moveDistance;
+			Vector3 newPosition = transform.position + horizontalMoveDirection * horizontalMoveDistance;
 			
 			alienBounds.center = newPosition + boundsOffset;
 
@@ -225,19 +230,14 @@ public class AlienWave : MonoBehaviour {
             else
             {
                 // Try vertical movement
-                horizontalMove *= -1;
-                newPosition = transform.position + verticalMove * moveDistance;
+                horizontalMoveDirection *= -1;
+                newPosition = transform.position + verticalMoveDirection * verticalMoveDistance;
 
                 alienBounds.center = newPosition + boundsOffset;
 
 				if (BoundsContainsBounds(moveBounds, alienBounds))
                 {
                     transform.position = newPosition;
-                }
-                else
-                {
-                    verticalMove *= -1;
-                    transform.position += verticalMove * moveDistance;
                 }
             }
 

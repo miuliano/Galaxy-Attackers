@@ -2,6 +2,9 @@
 using System.Collections;
 
 public class Player : MonoBehaviour {
+    
+    public delegate void PlayerEventHandler(Transform player);
+    public event PlayerEventHandler OnDeath;
 
     /// <summary>
     /// Horziontal speed of the player.
@@ -34,10 +37,7 @@ public class Player : MonoBehaviour {
 	public Transform debris;
 
 	private BoxCollider boxCollider;
-
-	// Event handlers
-	public delegate void PlayerEventHandler(Transform player);
-	public event PlayerEventHandler OnDestroy;
+    private Vector3 startPosition;
 
     [ContextMenu("Preview")]
     void Preview()
@@ -60,6 +60,8 @@ public class Player : MonoBehaviour {
 		Bounds bounds = playerModel.GetComponent<VoxelModel>().GetBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
+
+        startPosition = transform.position;
 	}
 
 	// Update is called once per frame
@@ -99,6 +101,12 @@ public class Player : MonoBehaviour {
 		}
 	}
 
+    public void Respawn()
+    {
+        transform.position = startPosition;
+        playerModel.GetComponent<VoxelModel>().hidden = false;
+    }
+
 	public bool CheckCollision(Vector3 position)
 	{
 		Vector3 localPos = playerModel.InverseTransformPoint(position);
@@ -114,13 +122,13 @@ public class Player : MonoBehaviour {
 			GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
 			go.rigidbody.AddExplosionForce(force, position, radius);
 		}
-		
-		Destroy(gameObject);
-		
+
+        vm.hidden = true;
+
 		// Trigger destroy event
-		if (OnDestroy != null)
+        if (OnDeath != null)
 		{
-			OnDestroy(transform);
+            OnDeath(transform);
 		}
 	}
 }
