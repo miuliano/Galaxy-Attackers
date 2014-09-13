@@ -3,35 +3,79 @@ using System.Collections;
 
 public class GameGUI : MonoBehaviour {
 
-    public GUIStyle style;
+	/// <summary>
+	/// Model to use for life tokens
+	/// </summary>
+	public Transform lifeToken;
 
-    private ScoreManager scoreManager;
-    private PlayerManager playerManager;
+	/// <summary>
+	/// The life token position.
+	/// </summary>
+	public Vector3 lifeTokenPosition;
 
-	void Start()
-	{
-		scoreManager = GameObject.FindObjectOfType<ScoreManager>();
-        playerManager = GameObject.FindObjectOfType<PlayerManager>();
+	/// <summary>
+	/// The width of the life token.
+	/// </summary>
+	public float lifeTokenWidth;
+
+	private GameObject[] lifeTokens;
+
+	private TextMesh player1ScoreText;
+	private TextMesh livesText;
+
+	private ScoreManager scoreManager;
+	private PlayerManager playerManager;
+
+	// Use this for initialization
+	void Start () {
+		player1ScoreText = GameObject.Find("Player1ScoreText").GetComponent<TextMesh>();
+		livesText = GameObject.Find("LivesText").GetComponent<TextMesh>();
+
+		// Register event listeners
+		scoreManager = GameObject.Find("ScoreManager").GetComponent<ScoreManager>();
+		scoreManager.OnScoreChanged += scoreManager_OnScoreChanged;
+
+		PlayerManager playerManager = GameObject.Find("PlayerManager").GetComponent<PlayerManager>();
+		playerManager.OnLivesChanged += playerManager_OnLivesChanged;
+
+		// Setup life token overlay
+		int lives = playerManager.startingLives;
+
+		lifeTokens = new GameObject[lives - 1];
+		
+		for (int i = 0; i < lives - 1; i++)
+		{
+			lifeTokens[i] = Instantiate(lifeToken.gameObject) as GameObject;
+			lifeTokens[i].transform.parent = transform;
+			lifeTokens[i].transform.localPosition = lifeTokenPosition + i * new Vector3(lifeTokenWidth, 0, 0);
+		}
+
+		livesText.text = lives.ToString();
 	}
 
-	void OnGUI()
+	void scoreManager_OnScoreChanged(int score)
 	{
-        // Left-aligned stuff
-        style.alignment = TextAnchor.UpperLeft;
+		player1ScoreText.text = score.ToString("D3");
+	}
 
-		GUI.Label(new Rect(10, 10, 100, 45), "SCORE <1>", style);
-        GUI.Label(new Rect(10, 30, 100, 45), string.Format("{0,3}", scoreManager.GetScore().ToString("D3")), style);
-        GUI.Label(new Rect(10, Screen.height - 30, 100, 45), playerManager.lives.ToString(), style);
+	void playerManager_OnLivesChanged(int lives)
+	{
+		// Turn on/off the relevant number of life tokens
+		for (int i = 0; i < lifeTokens.Length; i++)
+		{
+			if (i < lives - 1)
+				lifeTokens[i].GetComponent<VoxelModel>().hidden = false;
+			else
+				lifeTokens[i].GetComponent<VoxelModel>().hidden = true;
+		}
 
-        // Center-aligned stuff
-        style.alignment = TextAnchor.UpperCenter;
+		livesText.text = lives.ToString();
+	}
 
-        GUI.Label(new Rect(Screen.width / 2.0f - 50, 10, 100, 45), "HI-SCORE", style);
-
-        // Right-aligned stuff
-        style.alignment = TextAnchor.UpperRight;
-
-        GUI.Label(new Rect(Screen.width - 110, 10, 100, 45), "SCORE <2>", style);
-        GUI.Label(new Rect(Screen.width - 110, Screen.height - 30, 100, 45), "CREDIT 00", style);       
+	void OnDrawGizmos()
+	{
+		// Life token indicator
+		Gizmos.color = Color.green;
+		Gizmos.DrawSphere(lifeTokenPosition, 2.0f);
 	}
 }
