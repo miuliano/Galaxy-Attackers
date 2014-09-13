@@ -1,23 +1,16 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent( typeof(VoxelAnimation) )]
 public class Alien : MonoBehaviour {
+
+	public delegate void AlienEventHandler(Alien alien);
 
 	/// <summary>
 	/// The points scored for killing this alien.
 	/// </summary>
 	public int pointValue;
 
-	/// <summary>
-	/// List of children comprising the frames of this animation.
-	/// </summary>
-	public Transform[] frames;
-
-	/// <summary>
-	/// Time delay between voxel animation frames.
-	/// </summary>
-	public float animationDelay = 0.5f;
-	
     /// <summary>
     /// Reference to the debris voxel model.
     /// </summary>
@@ -27,60 +20,61 @@ public class Alien : MonoBehaviour {
 	/// Gets a value indicating whether this <see cref="Alien"/> is alive.
 	/// </summary>
 	/// <value><c>true</c> if alive; otherwise, <c>false</c>.</value>
-	public bool alive
+	public bool Alive
 	{
-		get 
+		get
 		{
 			return isAlive;
 		}
 	}
 
-	private bool isAlive = true;
+	/// <summary>
+	/// Occurs when the alien is destroyed.
+	/// </summary>
+	public event AlienEventHandler OnDestroy;
 
-	private int frameIndex = 0;
-	private float nextFrame = 0.0f;
+	private VoxelAnimation voxelAnimation;
 
     private BoxCollider boxCollider;
 
-    // Event handlers
-    public delegate void AlienEventHandler(Transform alien);
-    public event AlienEventHandler OnDestroy;
-
-    [ContextMenu("Preview")]
-    void Preview ()
-    {
-        frames[0].GetComponent<VoxelModel>().Initialize();
-    }
+	private bool isAlive;
 
 	// Use this for initialization
 	void Start () {
-		frameIndex = 0;
-		nextFrame = 0.0f;
-
 		boxCollider = GetComponent<BoxCollider>();
 
-		Bounds bounds = frames[0].GetComponent<VoxelModel>().GetBounds();
+		voxelAnimation = GetComponent<VoxelAnimation>();
+		voxelAnimation.OnFrameChange += voxelAnimation_OnFrameChange;
+
+		// If the first frame hasn't loaded yet, listen for it
+		if (voxelAnimation.CurrentFrame.loaded == false)
+		{
+			voxelAnimation.CurrentFrame.OnLoad += voxelModel_OnLoad;
+		}
+		else
+		{
+			Bounds bounds = voxelAnimation.CurrentFrame.GetBounds();
+			boxCollider.center = bounds.center;
+			boxCollider.size = bounds.size;
+		}
+
+		isAlive = true;
+	}
+
+	// Update bounds once the first frame has loaded
+	void voxelModel_OnLoad(VoxelModel model)
+	{
+		Bounds bounds = model.GetBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
-	
-	void Update()
+
+	// Update bounds on frame change
+	void voxelAnimation_OnFrameChange(VoxelAnimation animation)
 	{
-		float frameTime = Time.time;
-
-		if (frameTime > nextFrame && isAlive)
-		{
-			frames[frameIndex].gameObject.SetActive(true);
-			frames[(frameIndex - 1 >= 0 ? frameIndex - 1 : frames.Length - 1)].gameObject.SetActive(false); 
-
-			Bounds bounds = frames[frameIndex].GetComponent<VoxelModel>().GetBounds();
-			boxCollider.center = bounds.center;
-			boxCollider.size = bounds.size;
-
-			frameIndex = (frameIndex + 1 <= frames.Length - 1 ? frameIndex + 1 : 0);
-
-			nextFrame = frameTime + animationDelay;
-		}
+		Bounds bounds = animation.CurrentFrame.GetBounds();
+		boxCollider.center = bounds.center;
+		boxCollider.size = bounds.size;
 	}
 
     /// <summary>
@@ -92,8 +86,8 @@ public class Alien : MonoBehaviour {
     {
 		if (isAlive == false) return false;
 
-	    Vector3 localPos = frames[frameIndex].InverseTransformPoint(position);
-		return frames[frameIndex].GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
+	    Vector3 localPos = voxelAnimation.CurrentFrame.transform.InverseTransformPoint(position);
+		return voxelAnimation.CurrentFrame.GetVoxel(localPos) > 0;
     }
 
 	/// <summary>
@@ -113,7 +107,8 @@ public class Alien : MonoBehaviour {
     /// <param name="radius">Radius of the explosion force.</param>
     public void ExplodeAt(Vector3 position, float force, float radius)
     {
-		VoxelModel vm = frames[frameIndex].GetComponent<VoxelModel>();
+		// Create explosion
+		VoxelModel vm = voxelAnimation.CurrentFrame;
 
         foreach (Vector3 point in vm.ToPoints())
         {
@@ -121,21 +116,18 @@ public class Alien : MonoBehaviour {
             go.rigidbody.AddExplosionForce(force, position, radius);
         }
 
-		isAlive = false;
-
 		// Hide frames
-		foreach (Transform frame in frames)
-		{
-			frame.GetComponent<VoxelModel>().hidden = true;
-		}
+		voxelAnimation.Hidden = true;
 
 		// Turn off collisions
 		boxCollider.enabled = false;
 
+		isAlive = false;
+
         // Trigger destroy event
         if (OnDestroy != null)
         {
-            OnDestroy(transform);
+            OnDestroy(this);
         }
     }
 }

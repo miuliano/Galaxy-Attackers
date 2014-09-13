@@ -64,9 +64,9 @@ public class GameGUI : MonoBehaviour {
 		for (int i = 0; i < lifeTokens.Length; i++)
 		{
 			if (i < lives - 1)
-				lifeTokens[i].GetComponent<VoxelModel>().hidden = false;
+				lifeTokens[i].GetComponent<VoxelModel>().Hidden = false;
 			else
-				lifeTokens[i].GetComponent<VoxelModel>().hidden = true;
+				lifeTokens[i].GetComponent<VoxelModel>().Hidden = true;
 		}
 
 		livesText.text = lives.ToString();

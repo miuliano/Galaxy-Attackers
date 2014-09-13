@@ -72,7 +72,7 @@ public class AlienWave : MonoBehaviour {
     private Vector3 horizontalMoveDirection = Vector3.right;
     private Vector3 verticalMoveDirection = Vector3.down;
 
-	public float moveDelay = 1.0f;
+	private float moveDelay = 1.0f;
     private float nextMove = 0.0f;
 	private float nextShoot = 0.0f;
 
@@ -105,8 +105,8 @@ public class AlienWave : MonoBehaviour {
 				alienGameObject.transform.localPosition = new Vector3(x * xScale - xOffset, -1.0f * (y * yScale - yOffset), 0);
 
 				Alien alien = alienGameObject.GetComponent<Alien>();
-
 				alien.OnDestroy += alien_OnDestroy;
+
 				wave[y * waveWidth + x] = alien;
 
 				waveAlive++;
@@ -125,10 +125,10 @@ public class AlienWave : MonoBehaviour {
 	}
 
 	// Alien death handler
-    void alien_OnDestroy(Transform alien)
+    void alien_OnDestroy(Alien alien)
     {
 		// Give em points
-		int points = alien.GetComponent<Alien>().pointValue;
+		int points = alien.pointValue;
 
 		scoreManager.GainPoints(points);
 
@@ -151,7 +151,7 @@ public class AlienWave : MonoBehaviour {
 
 		for (int y = 0; y < waveHeight; y++)
 		{
-			if (wave[y * waveWidth + x].alive)
+			if (wave[y * waveWidth + x].Alive)
 			{
 				lowest = y;
 			}
@@ -330,7 +330,7 @@ public class AlienWave : MonoBehaviour {
 
 		foreach (Alien alien in wave)
 		{
-			if (alien.alive)
+			if (alien.Alive)
 			{
 				if (bounds.extents == Vector3.zero)
 				{

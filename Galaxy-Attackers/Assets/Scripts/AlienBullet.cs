@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+[RequireComponent( typeof(VoxelAnimation) )]
 public class AlienBullet : MonoBehaviour {
 	
 	/// <summary>
@@ -22,42 +23,48 @@ public class AlienBullet : MonoBehaviour {
 	/// Radius of the bullet collision explosion.
 	/// </summary>
 	public float explosionRadius = 20.0f;
-	
-	/// <summary>
-	/// Reference to the bullet's frames' models.
-	/// </summary>
-	public Transform[] bulletFrames;
-
-	/// <summary>
-	/// The animation delay.
-	/// </summary>
-	public float animationDelay = 0.5f;
 
 	/// <summary>
 	/// Reference to the debris voxel model.
 	/// </summary>
 	public Transform debris;
-	
-	private int frameIndex = 0;
-	private float nextFrame = 0.0f;
+
+	private VoxelAnimation voxelAnimation;
 
 	private BoxCollider boxCollider;
 	
-	[ContextMenu("Preview")]
-	void Preview()
-	{
-		bulletFrames[0].GetComponent<VoxelModel>().Initialize();
-	}
-	
 	// Use this for initialization
 	void Start () {
-		frameIndex = 0;
-		nextFrame = 0.0f;
-
-		// Update the box collider bounds
 		boxCollider = GetComponent<BoxCollider>();
+
+		voxelAnimation = GetComponent<VoxelAnimation>();
+		voxelAnimation.OnFrameChange += voxelAnimation_OnFrameChange;
 		
-		Bounds bounds = bulletFrames[0].GetComponent<VoxelModel>().GetBounds();
+		// If the first frame hasn't loaded yet, listen for it
+		if (voxelAnimation.CurrentFrame.loaded == false)
+		{
+			voxelAnimation.CurrentFrame.OnLoad += voxelModel_OnLoad;
+		}
+		else
+		{
+			Bounds bounds = voxelAnimation.CurrentFrame.GetBounds();
+			boxCollider.center = bounds.center;
+			boxCollider.size = bounds.size;
+		}
+	}
+
+	// Update bounds once the first frame has loaded
+	void voxelModel_OnLoad(VoxelModel model)
+	{
+		Bounds bounds = model.GetBounds();
+		boxCollider.center = bounds.center;
+		boxCollider.size = bounds.size;
+	}
+	
+	// Update bounds on frame change
+	void voxelAnimation_OnFrameChange(VoxelAnimation animation)
+	{
+		Bounds bounds = animation.CurrentFrame.GetBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
@@ -73,36 +80,6 @@ public class AlienBullet : MonoBehaviour {
 	
 	void Update()
 	{
-		float frameTime = Time.time;
-		
-		if (frameTime > nextFrame)
-		{
-			for (int i = 0; i < bulletFrames.Length; i++)
-			{
-				if (i == frameIndex)
-				{
-					bulletFrames[i].gameObject.SetActive(true);
-
-					Bounds bounds = bulletFrames[i].GetComponent<VoxelModel>().GetBounds();
-					boxCollider.center = bounds.center;
-					boxCollider.size = bounds.size;
-				}
-				else
-				{
-					bulletFrames[i].gameObject.SetActive(false);
-				}
-			}
-
-			frameIndex++;
-
-			if (frameIndex >= bulletFrames.Length)
-			{
-				frameIndex = 0;
-			}
-
-			nextFrame = frameTime + animationDelay;
-		}
-
 		// Move at a fixed velocity
 		transform.position += velocity * Time.deltaTime;
 	}
@@ -164,8 +141,8 @@ public class AlienBullet : MonoBehaviour {
 	/// <returns>True on collision, false otherwise.</returns>
 	public bool CheckCollision(Vector3 position)
 	{
-		Vector3 localPos = bulletFrames[frameIndex].InverseTransformPoint(position);
-		return bulletFrames[frameIndex].GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
+		Vector3 localPos = voxelAnimation.CurrentFrame.transform.InverseTransformPoint(position);
+		return voxelAnimation.CurrentFrame.GetVoxel(localPos) > 0;
 	}
 
 	/// <summary>
@@ -176,7 +153,7 @@ public class AlienBullet : MonoBehaviour {
 	/// <param name="radius">Radius of the explosion force.</param>
 	public void ExplodeAt(Vector3 position, float force, float radius)
 	{
-		VoxelModel vm = bulletFrames[frameIndex].GetComponent<VoxelModel>();
+		VoxelModel vm = voxelAnimation.CurrentFrame;
 		
 		foreach (Vector3 point in vm.ToPoints())
 		{

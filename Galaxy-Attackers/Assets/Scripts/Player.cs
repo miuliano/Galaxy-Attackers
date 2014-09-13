@@ -104,7 +104,7 @@ public class Player : MonoBehaviour {
     public void Respawn()
     {
         transform.position = startPosition;
-        playerModel.GetComponent<VoxelModel>().hidden = false;
+        playerModel.GetComponent<VoxelModel>().Hidden = false;
     }
 
 	public bool CheckCollision(Vector3 position)
@@ -123,7 +123,7 @@ public class Player : MonoBehaviour {
 			go.rigidbody.AddExplosionForce(force, position, radius);
 		}
 
-        vm.hidden = true;
+        vm.Hidden = true;
 
 		// Trigger destroy event
         if (OnDeath != null)

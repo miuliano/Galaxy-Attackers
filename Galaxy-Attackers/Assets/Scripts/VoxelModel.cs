@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public class VoxelModel : MonoBehaviour {
 
+	public delegate void VoxelModelHandler(VoxelModel model);
+
 	/// <summary>
 	/// Text file containing voxel information.
 	/// </summary>
@@ -35,7 +37,7 @@ public class VoxelModel : MonoBehaviour {
     /// Gets or sets a value indicating whether this instance is hidden.
     /// </summary>
     /// <value><c>true</c> if this instance is hidden; otherwise, <c>false</c>.</value>
-	public bool hidden
+	public bool Hidden
 	{
 		get
 		{
@@ -56,6 +58,11 @@ public class VoxelModel : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// Occurs when the model loads.
+	/// </summary>
+	public event VoxelModelHandler OnLoad;
+
     private int[] voxelData;
     private int volumeWidth;
     private int volumeHeight;
@@ -68,7 +75,7 @@ public class VoxelModel : MonoBehaviour {
     private List<Vector2> uvs = new List<Vector2>();
 
 	private bool isLoaded = false;
-	private bool isHidden = true;
+	private bool isHidden = false;
     private bool flagUpdate = false;
 
     [ContextMenu ("Preview")]
@@ -100,6 +107,11 @@ public class VoxelModel : MonoBehaviour {
         UpdateMesh();
 
 		isLoaded = true;
+
+		if (OnLoad != null)
+		{
+			OnLoad(this);
+		}
     }
 
 	// Update is called once per frame
