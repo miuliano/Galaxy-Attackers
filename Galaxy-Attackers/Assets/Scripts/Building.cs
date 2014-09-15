@@ -43,7 +43,7 @@ public class Building : MonoBehaviour {
 	/// <param name="model">Model.</param>
 	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = model.GetBounds();
+		Bounds bounds = model.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
@@ -68,7 +68,7 @@ public class Building : MonoBehaviour {
     public void ExplodeAt(Vector3 position, float force, float radius)
     {
 		Vector3 localPoint = voxelModel.transform.InverseTransformPoint(position);
-		IntVector2 voxelPoint = voxelModel.WorldToVoxelSpace(localPoint);
+		IntVector2 voxelPoint = voxelModel.LocalToVoxelSpace(localPoint);
 
         // Magic explosion radius
         const int voxelRadius = 6;
@@ -82,7 +82,7 @@ public class Building : MonoBehaviour {
                     (Random.value >= (x * x + y * y) * (1.0f / (2 * voxelRadius * voxelRadius)) || (x == 0 && y == 0)))
                 {
                     // Convert voxel coordinate to world space
-					Vector3 worldPoint = voxelModel.transform.TransformPoint(voxelModel.VoxelToWorldSpace(voxelPoint.x + x, voxelPoint.y + y));
+					Vector3 worldPoint = voxelModel.transform.TransformPoint(voxelModel.VoxelToLocalSpace(voxelPoint.x + x, voxelPoint.y + y));
 
                     GameObject go = Instantiate(debris.gameObject, worldPoint, Quaternion.identity) as GameObject;
 
@@ -93,6 +93,35 @@ public class Building : MonoBehaviour {
             }
         }
     }
+
+	void OnTriggerEnter(Collider other)
+	{
+		Raze(other);
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		Raze(other);
+	}
+
+	/// <summary>
+	/// Collision handler.
+	/// </summary>
+	/// <param name="other">Other.</param>
+	void Raze(Collider other)
+	{
+		if (other.tag == "Alien")
+		{
+			Alien alien = other.GetComponent<Alien>();
+
+			IntVector2[] intersections = VoxelModel.Intersect(voxelModel, alien.VoxelModel);
+
+			foreach (IntVector2 intersection in intersections)
+			{
+				voxelModel.SetVoxel(intersection, 0);
+			}
+		}
+	}
 
 	void OnDrawGizmos()
 	{

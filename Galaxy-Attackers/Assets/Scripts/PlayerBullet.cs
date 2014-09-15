@@ -47,7 +47,7 @@ public class PlayerBullet : MonoBehaviour {
 	/// <param name="model">Model.</param>
 	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = model.GetBounds();
+		Bounds bounds = model.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}

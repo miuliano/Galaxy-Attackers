@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class Player : MonoBehaviour {
@@ -40,6 +40,20 @@ public class Player : MonoBehaviour {
 	/// </summary>
 	public Transform debris;
 
+	/// <summary>
+	/// Gets a value indicating whether this <see cref="Player"/> is alive.
+	/// </summary>
+	/// <value><c>true</c> if alive; otherwise, <c>false</c>.</value>
+	public bool Alive
+	{
+		get
+		{
+			return isAlive;
+		}
+	}
+
+	private bool isAlive;
+
 	private BoxCollider boxCollider;
 
 	private VoxelModel voxelModel;
@@ -48,6 +62,9 @@ public class Player : MonoBehaviour {
 
 	void Start()
 	{
+		isAlive = true;
+		startPosition = transform.position;
+
 		boxCollider = GetComponent<BoxCollider>();
 		voxelModel = GetComponent<VoxelModel>();
 
@@ -67,13 +84,15 @@ public class Player : MonoBehaviour {
 	/// <param name="model">Model.</param>
 	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = model.GetBounds();
+		Bounds bounds = model.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
 
 	// Update is called once per frame
 	void Update () {
+		if (isAlive == false) return;
+
         float hMove = Input.GetAxis("Horizontal");
         float vMove = Input.GetAxis("Vertical");
 		bool fire1 = Input.GetButtonDown("Fire1");
@@ -100,35 +119,26 @@ public class Player : MonoBehaviour {
 				OnShoot(this);
 			}
 		}
-
-		// Transform to perspective projection
-		if (Input.GetKeyUp(KeyCode.P) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Orthographic)
-		{
-			Camera.main.GetComponent<ChangeProjection>().ToPerspective(1.0f);
-		}
-
-		// Transform to orthographic projection
-		if (Input.GetKeyUp(KeyCode.O) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Perspective)
-		{
-			Camera.main.GetComponent<ChangeProjection>().ToOrthographic(1.0f);
-		}
 	}
 
     public void Respawn()
     {
         transform.position = startPosition;
         voxelModel.Hidden = false;
+		isAlive = true;
     }
 
 	public bool CheckCollision(Vector3 position)
 	{
+		if (isAlive == false) return false;
+
 		Vector3 localPos = voxelModel.transform.InverseTransformPoint(position);
 		return voxelModel.GetVoxel(localPos) > 0;
 	}
 
 	public void ExplodeAt(Vector3 position, float force, float radius)
 	{
-		foreach (Vector3 point in voxelModel.ToPoints())
+		foreach (Vector3 point in voxelModel.ToLocalPoints())
 		{
 			GameObject go = Instantiate(debris.gameObject, voxelModel.transform.TransformPoint(point), Quaternion.identity) as GameObject;
 			go.rigidbody.AddExplosionForce(force, position, radius);
@@ -136,10 +146,44 @@ public class Player : MonoBehaviour {
 
 		voxelModel.Hidden = true;
 
+		isAlive = false;
+
 		// Trigger destroy event
         if (OnDeath != null)
 		{
             OnDeath(this);
+		}
+	}
+
+	void OnTriggerStay(Collider other)
+	{
+		CollisionHandler(other);
+	}
+
+	void OnTriggerEnter(Collider other)
+	{
+		CollisionHandler(other);
+	}
+
+	/// <summary>
+	/// Handle collisions with the player.
+	/// </summary>
+	/// <param name="other">Other.</param>
+	void CollisionHandler(Collider other)
+	{
+		if (isAlive == false) return;
+
+		if (other.tag == "Alien")
+		{
+			Alien alien = other.GetComponent<Alien>();
+			
+			IntVector2[] intersections = VoxelModel.Intersect(voxelModel, alien.VoxelModel);
+
+			// Game over!
+			if (intersections.Length > 0)
+			{
+				ExplodeAt(voxelModel.VoxelToWorldSpace(intersections[0]), 1000.0f, 1.0f);
+			}
 		}
 	}
 

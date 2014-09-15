@@ -29,6 +29,18 @@ public class Alien : MonoBehaviour {
 	}
 
 	/// <summary>
+	/// Gets the voxel model of the current frame.
+	/// </summary>
+	/// <value>The voxel model.</value>
+	public VoxelModel VoxelModel
+	{
+		get
+		{
+			return voxelAnimation.CurrentFrame;
+		}
+	}
+
+	/// <summary>
 	/// Occurs when the alien is destroyed.
 	/// </summary>
 	public event AlienEventHandler OnDestroy;
@@ -75,7 +87,7 @@ public class Alien : MonoBehaviour {
 	/// <param name="model">Model.</param>
 	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = model.GetBounds();
+		Bounds bounds = model.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
@@ -113,7 +125,7 @@ public class Alien : MonoBehaviour {
 		// Create explosion
 		VoxelModel vm = voxelAnimation.CurrentFrame;
 
-        foreach (Vector3 point in vm.ToPoints())
+        foreach (Vector3 point in vm.ToLocalPoints())
         {
             GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
             go.rigidbody.AddExplosionForce(force, position, radius);

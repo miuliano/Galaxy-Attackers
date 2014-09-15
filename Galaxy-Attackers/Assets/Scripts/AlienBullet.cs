@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 [RequireComponent( typeof(VoxelAnimation) )]
@@ -66,7 +66,7 @@ public class AlienBullet : MonoBehaviour {
 	/// <param name="animation">Animation.</param>
 	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = model.GetBounds();
+		Bounds bounds = model.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
@@ -74,7 +74,7 @@ public class AlienBullet : MonoBehaviour {
 	// Update bounds on frame change
 	void voxelAnimation_OnFrameChange(VoxelAnimation animation)
 	{
-		Bounds bounds = animation.CurrentFrame.GetBounds();
+		Bounds bounds = animation.CurrentFrame.GetLocalBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}
@@ -165,7 +165,7 @@ public class AlienBullet : MonoBehaviour {
 	{
 		VoxelModel vm = voxelAnimation.CurrentFrame;
 		
-		foreach (Vector3 point in vm.ToPoints())
+		foreach (Vector3 point in vm.ToLocalPoints())
 		{
 			GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
 			go.rigidbody.AddExplosionForce(force, position, radius);

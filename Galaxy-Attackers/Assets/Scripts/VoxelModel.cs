@@ -123,12 +123,40 @@ public class VoxelModel : MonoBehaviour {
 			UpdateMesh();
 		}
 	}
+
+	/// <summary>
+	/// Returns the voxels in a intersected by b.
+	/// </summary>
+	/// <param name="a">The base voxel model.</param>
+	/// <param name="b">The intersecting voxel model.</param>
+	public static IntVector2[] Intersect(VoxelModel a, VoxelModel b)
+	{
+		List<IntVector2> intersections = new List<IntVector2>();
+
+		Bounds bounds = a.GetWorldBounds();
+		Vector3[] points = b.ToWorldPoints();
+
+		foreach (Vector3 point in points)
+		{
+			if (bounds.Contains(point))
+			{
+				IntVector2 voxelPoint = a.WorldToVoxelSpace(point);
+
+				if (a.GetVoxel(voxelPoint) > 0)
+				{
+					intersections.Add(voxelPoint);
+				}
+			}
+		}
+
+		return intersections.ToArray();
+	}
 	
     /// <summary>
-    /// Returns the bounds of the voxel model.
+    /// Returns the bounds of the voxel model in local space.
     /// </summary>
     /// <returns>Bounds of the voxel model.</returns>
-    public Bounds GetBounds()
+    public Bounds GetLocalBounds()
     {
         Bounds bounds = new Bounds();
 
@@ -146,6 +174,17 @@ public class VoxelModel : MonoBehaviour {
 
         return bounds;
     }
+
+	/// <summary>
+	/// Returns the bounds of the voxel model in world space.
+	/// </summary>
+	/// <returns>The world bounds.</returns>
+	public Bounds GetWorldBounds()
+	{
+		Bounds bounds = GetLocalBounds();
+		bounds.center = transform.TransformPoint(bounds.center);
+		return bounds;
+	}
 
 	/// <summary>
 	/// Load voxel data from the current file.
@@ -201,12 +240,22 @@ public class VoxelModel : MonoBehaviour {
         }
     }
 
+	/// <summary>
+	/// Convert a point in world space to voxel space.
+	/// </summary>
+	/// <returns>The to voxel space.</returns>
+	/// <param name="point">Point.</param>
+	public IntVector2 WorldToVoxelSpace(Vector3 point)
+	{
+		return LocalToVoxelSpace(transform.InverseTransformPoint(point));
+	}
+
     /// <summary>
-    /// Convert a point in world space to voxel space.
+    /// Convert a point in local space to voxel space.
     /// </summary>
     /// <param name="point">Point in world space.</param>
     /// <returns>Point in voxel space.</returns>
-    public IntVector2 WorldToVoxelSpace(Vector3 point)
+    public IntVector2 LocalToVoxelSpace(Vector3 point)
     {
         Vector3 offset = Vector3.zero;
 
@@ -224,23 +273,44 @@ public class VoxelModel : MonoBehaviour {
         return new IntVector2(x, y);
     }
 
+	/// <summary>
+	/// Converts a point in voxel space to world space.
+	/// </summary>
+	/// <returns>The point in world space.</returns>
+	/// <param name="point">Point.</param>
+	public Vector3 VoxelToWorldSpace(IntVector2 point)
+	{
+		return transform.TransformPoint(VoxelToLocalSpace(point));
+	}
+
+	/// <summary>
+	/// Converts a point in voxel space to world space.
+	/// </summary>
+	/// <returns>Point in world space.</returns>
+	/// <param name="x">X component of the point.</param>
+	/// <param name="y">Y component of the point.</param>
+	public Vector3 VoxelToWorldSpace(int x, int y)
+	{
+		return transform.TransformPoint(VoxelToLocalSpace(x, y));
+	}
+
     /// <summary>
-    /// Convert a point in voxel space to world space.
+    /// Converts a point in voxel space to local space.
     /// </summary>
     /// <param name="point">Point in voxel space.</param>
-    /// <returns>Point in world space.</returns>
-    public Vector3 VoxelToWorldSpace(IntVector2 point)
+    /// <returns>Point in local space.</returns>
+    public Vector3 VoxelToLocalSpace(IntVector2 point)
     {
-        return VoxelToWorldSpace(point.x, point.y);
+        return VoxelToLocalSpace(point.x, point.y);
     }
 
     /// <summary>
-    /// Convert a point in voxel space to world space.
+    /// Converts a point in voxel space to local space.
     /// </summary>
     /// <param name="x">X component of the point.</param>
     /// <param name="y">Y component of the point.</param>
-    /// <returns>Point in world space.</returns>
-    public Vector3 VoxelToWorldSpace(int x, int y)
+    /// <returns>Point in local space.</returns>
+    public Vector3 VoxelToLocalSpace(int x, int y)
     {
         Vector3 offset = Vector3.zero;
 
@@ -259,7 +329,7 @@ public class VoxelModel : MonoBehaviour {
     /// <returns>The value of the voxel.</returns>
     public int GetVoxel(Vector3 point)
     {
-        return GetVoxel(WorldToVoxelSpace(point));
+        return GetVoxel(LocalToVoxelSpace(point));
     }
 
 	/// <summary>
@@ -299,7 +369,7 @@ public class VoxelModel : MonoBehaviour {
 	/// <param name="value">Value of the voxel.</param>
     public void SetVoxel(Vector3 point, int value)
     {        
-        SetVoxel(WorldToVoxelSpace(point), value);
+        SetVoxel(LocalToVoxelSpace(point), value);
     }
 
     /// <summary>
@@ -335,10 +405,37 @@ public class VoxelModel : MonoBehaviour {
     }
 
 	/// <summary>
-	/// Returns the filled voxels as centre points.
+	/// Returns the centre points of the voxels in world space.
 	/// </summary>
 	/// <returns>Centre points of the voxels.</returns>
-	public Vector3[] ToPoints()
+	public Vector3[] ToWorldPoints()
+	{
+		Vector3[] points = new Vector3[voxelCount];
+		
+		int index = 0;
+		int x = 0, y = 0;
+		
+		for (; y < volumeHeight; y++)
+		{
+			for (x = 0; x < volumeWidth; x++)
+			{
+				if (voxelData[y * volumeWidth + x] > 0)
+				{
+					points[index] = VoxelToWorldSpace(x, y);
+					index++;
+				}
+			}
+		}
+		
+		return points;
+
+	}
+
+	/// <summary>
+	/// Returns the centre points of voxels in local space.
+	/// </summary>
+	/// <returns>Centre points of the voxels.</returns>
+	public Vector3[] ToLocalPoints()
 	{
 		Vector3[] points = new Vector3[voxelCount];
 
@@ -351,7 +448,7 @@ public class VoxelModel : MonoBehaviour {
 			{
 				if (voxelData[y * volumeWidth + x] > 0)
 				{
-                    points[index] = VoxelToWorldSpace(x, y);
+                    points[index] = VoxelToLocalSpace(x, y);
 					index++;
 				}
 			}
@@ -387,7 +484,7 @@ public class VoxelModel : MonoBehaviour {
                 // Handle filled voxels
                 if (voxelData[y * volumeWidth + x] > 0)
                 {
-                    Vector3 point = VoxelToWorldSpace(x, y);
+                    Vector3 point = VoxelToLocalSpace(x, y);
 
                     // Always draw front
                     QuadFront(point.x, point.y, point.z);

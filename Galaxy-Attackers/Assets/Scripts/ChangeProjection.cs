@@ -42,6 +42,21 @@ public class ChangeProjection : MonoBehaviour {
 		projectionState = startingState;
 	}
 
+	void Update()
+	{
+		// Transform to perspective projection
+		if (Input.GetKeyUp(KeyCode.P) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Orthographic)
+		{
+			Camera.main.GetComponent<ChangeProjection>().ToPerspective(1.0f);
+		}
+		
+		// Transform to orthographic projection
+		if (Input.GetKeyUp(KeyCode.O) && Camera.main.GetComponent<ChangeProjection>().State == ChangeProjection.ProjectionState.Perspective)
+		{
+			Camera.main.GetComponent<ChangeProjection>().ToOrthographic(1.0f);
+		}
+	}
+
 	/// <summary>
 	/// Smoothly transform the projection to orthographic.
 	/// </summary>
