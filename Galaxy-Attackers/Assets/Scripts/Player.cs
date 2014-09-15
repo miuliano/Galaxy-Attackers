@@ -3,8 +3,17 @@ using System.Collections;
 
 public class Player : MonoBehaviour {
     
-    public delegate void PlayerEventHandler(Transform player);
+    public delegate void PlayerEventHandler(Player player);
+
+	/// <summary>
+	/// Occurs when then player dies.
+	/// </summary>
     public event PlayerEventHandler OnDeath;
+
+	/// <summary>
+	/// Occurs when the player shoots.
+	/// </summary>
+	public event PlayerEventHandler OnShoot;
 
     /// <summary>
     /// Horziontal speed of the player.
@@ -85,6 +94,11 @@ public class Player : MonoBehaviour {
 		if (fire1 == true && GameObject.FindGameObjectsWithTag("PlayerBullet").Length == 0)
 		{
 			Instantiate(bullet.gameObject, transform.position + gunOffset, Quaternion.identity);
+
+			if (OnShoot != null)
+			{
+				OnShoot(this);
+			}
 		}
 
 		// Transform to perspective projection
@@ -125,7 +139,7 @@ public class Player : MonoBehaviour {
 		// Trigger destroy event
         if (OnDeath != null)
 		{
-            OnDeath(transform);
+            OnDeath(this);
 		}
 	}
 

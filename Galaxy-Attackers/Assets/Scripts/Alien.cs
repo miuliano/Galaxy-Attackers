@@ -40,7 +40,10 @@ public class Alien : MonoBehaviour {
 	private bool isAlive;
 
 	// Use this for initialization
-	void Start () {
+	protected virtual void Start () {
+
+		isAlive = true;
+
 		boxCollider = GetComponent<BoxCollider>();
 
 		voxelAnimation = GetComponent<VoxelAnimation>();
@@ -55,8 +58,6 @@ public class Alien : MonoBehaviour {
 		{
 			LoadBounds(voxelAnimation.CurrentFrame);
 		}
-
-		isAlive = true;
 	}
 
 	/// <summary>

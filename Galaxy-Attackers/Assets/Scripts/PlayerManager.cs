@@ -8,7 +8,19 @@ public class PlayerManager : MonoBehaviour {
     /// <summary>
     /// Get or set the number of lives the player has.
     /// </summary>
-    public int lives { get; set; }
+    public int Lives { get; set; }
+
+	/// <summary>
+	/// Gets the number of shots taken.
+	/// </summary>
+	/// <value>The shots taken.</value>
+	public int ShotsTaken
+	{
+		get
+		{
+			return shotsTaken;
+		}
+	}
 
     /// <summary>
     /// The number of lives a player starts with.
@@ -27,12 +39,14 @@ public class PlayerManager : MonoBehaviour {
     /// <summary>
     /// Flags whether a respawn should occur when the respawn timer finishes.
     /// </summary>
-    private bool flagRespawn = false;
+    private bool flagRespawn;
 
     /// <summary>
     /// Time of the next respawn.
     /// </summary>
     private float nextRespawn = 0.0f;
+
+	private int shotsTaken;
 
 	/// <summary>
 	/// Occurs when the number of player lives change.
@@ -42,10 +56,15 @@ public class PlayerManager : MonoBehaviour {
     // Use this for initialization
     void Start()
     {
-        lives = startingLives;
+		flagRespawn = false;
+		nextRespawn = respawnDelay;
+		shotsTaken = 0;
+
+        Lives = startingLives;
 
         player = GameObject.FindWithTag("Player").GetComponent<Player>();
         player.OnDeath += player_OnDeath;
+		player.OnShoot += player_OnShoot;
     }
 
     void Update()
@@ -57,16 +76,16 @@ public class PlayerManager : MonoBehaviour {
         }
     }
 
-    void player_OnDeath(Transform player)
+    void player_OnDeath(Player player)
     {
-        lives -= 1;
+        Lives -= 1;
 
 		if (OnLivesChanged != null)
 		{
-			OnLivesChanged(lives);
+			OnLivesChanged(Lives);
 		}
 
-        if (lives <= 0)
+        if (Lives <= 0)
         {
             // GAME OVER;
             return;
@@ -75,4 +94,9 @@ public class PlayerManager : MonoBehaviour {
         nextRespawn = Time.time + respawnDelay;
         flagRespawn = true;
     }
+
+	void player_OnShoot(Player player)
+	{
+		shotsTaken += 1;
+	}
 }
