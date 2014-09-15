@@ -132,6 +132,8 @@ public class Player : MonoBehaviour {
 	void OnDrawGizmos() {
 		Gizmos.color = Color.blue;
 		Gizmos.DrawWireCube(playerBounds.center, playerBounds.size);
+
+		Gizmos.DrawIcon(transform.position, "player_icon.png");
 		
 		Gizmos.color = Color.red;
 		Gizmos.DrawWireSphere(transform.position + gunOffset, 1.0f);

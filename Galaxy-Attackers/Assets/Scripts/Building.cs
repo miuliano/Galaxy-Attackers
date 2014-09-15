@@ -93,4 +93,9 @@ public class Building : MonoBehaviour {
             }
         }
     }
+
+	void OnDrawGizmos()
+	{
+		Gizmos.DrawIcon(transform.position, "building_icon.png");
+	}
 }
