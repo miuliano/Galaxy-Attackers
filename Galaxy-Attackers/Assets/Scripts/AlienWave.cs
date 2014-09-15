@@ -39,21 +39,6 @@ public class AlienWave : MonoBehaviour {
 	public Vector3 shootOffset;
 
 	/// <summary>
-	/// The time delay before spawning a bonus alien.
-	/// </summary>
-	public float bonusDelay = 30.0f;
-
-	/// <summary>
-	/// The spawn location for the bonus ship when coming from the left.
-	/// </summary>
-	public Vector3 bonusSpawnLeft;
-
-	/// <summary>
-	/// The spawn location for the bonus ship when coming from the right.
-	/// </summary>
-	public Vector3 bonusSpawnRight;
-
-	/// <summary>
 	/// The size of the alien wave.
 	/// </summary>
     public Vector3 waveSize;
@@ -67,11 +52,6 @@ public class AlienWave : MonoBehaviour {
 	/// List of available alien types.
 	/// </summary>
 	public Transform[] alienPrefabs;
-
-	/// <summary>
-	/// The bonus alien prefab.
-	/// </summary>
-	public Transform mothershipPrefab;
 
 	/// <summary>
 	/// List of available bullets that the aliens fire.
@@ -95,10 +75,8 @@ public class AlienWave : MonoBehaviour {
 	private float moveDelay;
 	private float nextMove;
 	private float nextShoot;
-	private float nextBonus;
 
 	private ScoreManager scoreManager;
-	private PlayerManager playerManager;
 
     private bool flagUpdateBounds = false;
 
@@ -108,7 +86,6 @@ public class AlienWave : MonoBehaviour {
 		moveDelay = maxMoveDelay;
 		nextMove = moveDelay;
 		nextShoot = shootDelay;
-		nextBonus = bonusDelay;
 
 		LoadWaveData();
 
@@ -148,7 +125,6 @@ public class AlienWave : MonoBehaviour {
 		nextMove = moveDelay;
 
 		scoreManager = GameObject.FindObjectOfType<ScoreManager>();
-		playerManager = GameObject.FindObjectOfType<PlayerManager>();
 
 		flagUpdateBounds = true;
 	}
@@ -322,41 +298,6 @@ public class AlienWave : MonoBehaviour {
 
 			nextShoot = frameTime + shootDelay;
 		}
-
-		if (frameTime > nextBonus)
-		{
-			int spawnCondition = Random.Range(0, 2);
-
-			Vector3 spawnPosition = spawnCondition == 0 ? bonusSpawnLeft : bonusSpawnRight;
-	
-			GameObject go = Instantiate(mothershipPrefab.gameObject, spawnPosition, Quaternion.identity) as GameObject;
-
-			Mothership mothership = go.GetComponent<Mothership>();
-			mothership.OnDestroy += alien_OnDestroy;
-			mothership.moveDirection = spawnCondition == 0 ? Vector3.right : Vector3.left;
-			mothership.destination = spawnCondition == 0 ? bonusSpawnRight : bonusSpawnLeft;
-
-			// Determine how many points this bonus is worth
-			if (playerManager.ShotsTaken == 23 || (playerManager.ShotsTaken - 23) % 15 == 0)
-			{
-				mothership.pointValue = 300;
-			}
-			else
-			{
-				int pointCondition = Random.Range(0, 4);
-
-				if (pointCondition == 0)
-					mothership.pointValue = 50;
-				else if (pointCondition == 1)
-					mothership.pointValue = 100;
-				else if (pointCondition == 2)
-					mothership.pointValue = 150;
-				else if (pointCondition == 3)
-					mothership.pointValue = 300;
-			}
-
-			nextBonus = frameTime + bonusDelay;
-		}
 	}
 
     void LateUpdate()
@@ -423,8 +364,5 @@ public class AlienWave : MonoBehaviour {
 		// Draw alien bounds
 		Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(alienBounds.center, alienBounds.size);
-
-		Gizmos.DrawIcon(bonusSpawnLeft, "alien_icon.png");
-		Gizmos.DrawIcon(bonusSpawnRight, "alien_icon.png");
     }
 }
