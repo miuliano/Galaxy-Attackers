@@ -44,35 +44,37 @@ public class Alien : MonoBehaviour {
 		boxCollider = GetComponent<BoxCollider>();
 
 		voxelAnimation = GetComponent<VoxelAnimation>();
-		voxelAnimation.OnFrameChange += voxelAnimation_OnFrameChange;
+		voxelAnimation.OnFrameChange += LoadBounds;
 
 		// If the first frame hasn't loaded yet, listen for it
-		if (voxelAnimation.CurrentFrame.loaded == false)
+		if (voxelAnimation.CurrentFrame.Loaded == false)
 		{
-			voxelAnimation.CurrentFrame.OnLoad += voxelModel_OnLoad;
+			voxelAnimation.CurrentFrame.OnLoad += LoadBounds;
 		}
 		else
 		{
-			Bounds bounds = voxelAnimation.CurrentFrame.GetBounds();
-			boxCollider.center = bounds.center;
-			boxCollider.size = bounds.size;
+			LoadBounds(voxelAnimation.CurrentFrame);
 		}
 
 		isAlive = true;
 	}
 
-	// Update bounds once the first frame has loaded
-	void voxelModel_OnLoad(VoxelModel model)
+	/// <summary>
+	/// Sets the box collider bounds to that of the current frame of the voxel animation.
+	/// </summary>
+	/// <param name="animation">Animation.</param>
+	void LoadBounds(VoxelAnimation animation)
 	{
-		Bounds bounds = model.GetBounds();
-		boxCollider.center = bounds.center;
-		boxCollider.size = bounds.size;
+		LoadBounds(animation.CurrentFrame);
 	}
 
-	// Update bounds on frame change
-	void voxelAnimation_OnFrameChange(VoxelAnimation animation)
+	/// <summary>
+	/// Sets the box collider bounds to that of the voxel model.
+	/// </summary>
+	/// <param name="model">Model.</param>
+	void LoadBounds(VoxelModel model)
 	{
-		Bounds bounds = animation.CurrentFrame.GetBounds();
+		Bounds bounds = model.GetBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
 	}

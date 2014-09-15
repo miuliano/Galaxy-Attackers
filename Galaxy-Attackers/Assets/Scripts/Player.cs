@@ -26,42 +26,41 @@ public class Player : MonoBehaviour {
     /// </summary>
     public Transform bullet;
 
-    /// <summary>
-    ///  Reference to the player voxel model.
-    /// </summary>
-    public Transform playerModel;
-
 	/// <summary>
 	/// Reference to the debris voxel model.
 	/// </summary>
 	public Transform debris;
 
 	private BoxCollider boxCollider;
+
+	private VoxelModel voxelModel;
+
     private Vector3 startPosition;
-
-    [ContextMenu("Preview")]
-    void Preview()
-    {
-        playerModel.GetComponent<VoxelModel>().Initialize();
-    }
-
-	void OnDrawGizmos() {
-		Gizmos.color = Color.blue;
-		Gizmos.DrawWireCube(playerBounds.center, playerBounds.size);
-
-		Gizmos.color = Color.red;
-		Gizmos.DrawWireSphere(transform.position + gunOffset, 1.0f);
-	}
 
 	void Start()
 	{
 		boxCollider = GetComponent<BoxCollider>();
+		voxelModel = GetComponent<VoxelModel>();
 
-		Bounds bounds = playerModel.GetComponent<VoxelModel>().GetBounds();
+		if (voxelModel.Loaded != true)
+		{
+			voxelModel.OnLoad += LoadBounds;
+		}
+		else
+		{
+			LoadBounds(voxelModel);
+		}
+	}
+
+	/// <summary>
+	/// Sets the box collider bounds to that of the voxel model.
+	/// </summary>
+	/// <param name="model">Model.</param>
+	void LoadBounds(VoxelModel model)
+	{
+		Bounds bounds = model.GetBounds();
 		boxCollider.center = bounds.center;
 		boxCollider.size = bounds.size;
-
-        startPosition = transform.position;
 	}
 
 	// Update is called once per frame
@@ -104,31 +103,37 @@ public class Player : MonoBehaviour {
     public void Respawn()
     {
         transform.position = startPosition;
-        playerModel.GetComponent<VoxelModel>().Hidden = false;
+        voxelModel.Hidden = false;
     }
 
 	public bool CheckCollision(Vector3 position)
 	{
-		Vector3 localPos = playerModel.InverseTransformPoint(position);
-		return playerModel.GetComponent<VoxelModel>().GetVoxel(localPos) > 0;
+		Vector3 localPos = voxelModel.transform.InverseTransformPoint(position);
+		return voxelModel.GetVoxel(localPos) > 0;
 	}
 
 	public void ExplodeAt(Vector3 position, float force, float radius)
 	{
-		VoxelModel vm = playerModel.GetComponent<VoxelModel>();
-		
-		foreach (Vector3 point in vm.ToPoints())
+		foreach (Vector3 point in voxelModel.ToPoints())
 		{
-			GameObject go = Instantiate(debris.gameObject, vm.transform.TransformPoint(point), Quaternion.identity) as GameObject;
+			GameObject go = Instantiate(debris.gameObject, voxelModel.transform.TransformPoint(point), Quaternion.identity) as GameObject;
 			go.rigidbody.AddExplosionForce(force, position, radius);
 		}
 
-        vm.Hidden = true;
+		voxelModel.Hidden = true;
 
 		// Trigger destroy event
         if (OnDeath != null)
 		{
             OnDeath(transform);
 		}
+	}
+
+	void OnDrawGizmos() {
+		Gizmos.color = Color.blue;
+		Gizmos.DrawWireCube(playerBounds.center, playerBounds.size);
+		
+		Gizmos.color = Color.red;
+		Gizmos.DrawWireSphere(transform.position + gunOffset, 1.0f);
 	}
 }

@@ -25,7 +25,7 @@ public class VoxelModel : MonoBehaviour {
 	/// Gets a value indicating whether this instance has loaded.
 	/// </summary>
 	/// <value><c>true</c> if this instance has loaded; otherwise, <c>false</c>.</value>
-	public bool loaded
+	public bool Loaded
 	{
 		get
 		{

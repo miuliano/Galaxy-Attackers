@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public class PlayerBullet : MonoBehaviour {
@@ -23,27 +23,33 @@ public class PlayerBullet : MonoBehaviour {
     /// </summary>
     public float explosionRadius = 20.0f;
 
-    /// <summary>
-    /// Reference to the bullet voxel model.
-    /// </summary>
-    public Transform bulletModel;
-
+	private VoxelModel voxelModel;
     private BoxCollider boxCollider;
-
-    [ContextMenu("Preview")]
-    void Preview()
-    {
-        bulletModel.GetComponent<VoxelModel>().Initialize();
-    }
-
+	
 	// Use this for initialization
 	void Start () {
-        // Update the box collider bounds
         boxCollider = GetComponent<BoxCollider>();
+		voxelModel = GetComponent<VoxelModel>();
 
-        Bounds bounds = bulletModel.GetComponent<VoxelModel>().GetBounds();
-        boxCollider.center = bounds.center;
-        boxCollider.size = bounds.size;
+		if (voxelModel.Loaded != true)
+		{
+			voxelModel.OnLoad += LoadBounds;
+		}
+		else
+		{
+			LoadBounds(voxelModel);
+		}
+	}
+
+	/// <summary>
+	/// Sets the box collider bounds to that of the voxel model.
+	/// </summary>
+	/// <param name="model">Model.</param>
+	void LoadBounds(VoxelModel model)
+	{
+		Bounds bounds = model.GetBounds();
+		boxCollider.center = bounds.center;
+		boxCollider.size = bounds.size;
 	}
 
     /// <summary>
@@ -57,7 +63,6 @@ public class PlayerBullet : MonoBehaviour {
 
 	void Update()
 	{
-		// Move at a fixed velocity
 		transform.position += velocity * Time.deltaTime;
 	}
 

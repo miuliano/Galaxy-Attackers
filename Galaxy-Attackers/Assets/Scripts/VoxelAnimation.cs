@@ -108,7 +108,7 @@ public class VoxelAnimation : MonoBehaviour {
 		if (frameTime > nextFrame)
 		{
 			// Only toggle frames if we aren't hidden
-			if (isHidden == false) {
+			if (isHidden == false && frames.Length > 1) {
 				frames[frameIndex].Hidden = false;
 				frames[(frameIndex - 1 >= 0 ? frameIndex - 1 : frames.Length - 1)].Hidden = true; 
 			}
