@@ -77,6 +77,7 @@ public class AlienWave : MonoBehaviour {
 	private float nextShoot;
 
 	private ScoreManager scoreManager;
+	private PlayerManager playerManager;
 
     private bool flagUpdateBounds = false;
 
@@ -125,6 +126,7 @@ public class AlienWave : MonoBehaviour {
 		nextMove = moveDelay;
 
 		scoreManager = GameObject.FindObjectOfType<ScoreManager>();
+		playerManager = GameObject.FindObjectOfType<PlayerManager>();
 
 		flagUpdateBounds = true;
 	}
@@ -137,8 +139,20 @@ public class AlienWave : MonoBehaviour {
 
 		scoreManager.GainPoints(points);
 
+		/*
 		// Linearly interpolate between max and min move delay based on aliens left
-		moveDelay = (maxMoveDelay - minMoveDelay) * (waveAlive / (float)maxWaveAlive) + minMoveDelay;
+		moveDelay = (maxMoveDelay - minMoveDelay) * ((waveAlive - 1) / (float)maxWaveAlive) + minMoveDelay;
+		*/
+
+		moveDelay = minMoveDelay * Mathf.Pow(maxMoveDelay / minMoveDelay, (waveAlive - 1) / (float)maxWaveAlive);
+
+		Debug.Log(moveDelay);
+
+		// Update animation delays for each alien
+		foreach (Alien a in wave)
+		{
+			a.VoxelAnimation.frameDelay = moveDelay;
+		}
 
 		waveAlive--;
 
@@ -221,32 +235,44 @@ public class AlienWave : MonoBehaviour {
 		
 		float frameTime = Time.time;
 		
-		if (frameTime > nextMove)
+		if (frameTime > nextMove && waveAlive > 0)
 		{
-			// Try horizontal movement
-			Vector3 newPosition = transform.position + horizontalMoveDirection * horizontalMoveDistance;
-			
-			alienBounds.center = newPosition + boundsOffset;
-
-			if (BoundsContainsBounds(moveBounds, alienBounds))
-            {
-                transform.position = newPosition;
-            }
-            else
-            {
-                // Try vertical movement
-                horizontalMoveDirection *= -1;
-                newPosition = transform.position + verticalMoveDirection * verticalMoveDistance;
-
-                alienBounds.center = newPosition + boundsOffset;
+			while (frameTime > nextMove)
+			{
+				// Try horizontal movement
+				Vector3 newPosition = transform.position + horizontalMoveDirection * horizontalMoveDistance;
+				
+				alienBounds.center = newPosition + boundsOffset;
 
 				if (BoundsContainsBounds(moveBounds, alienBounds))
-                {
-                    transform.position = newPosition;
-                }
-            }
+	            {
+	                transform.position = newPosition;
+	            }
+	            else
+	            {
+	                // Try vertical movement
+	                horizontalMoveDirection *= -1;
+	                newPosition = transform.position + verticalMoveDirection * verticalMoveDistance;
 
-            alienBounds.center = transform.position + boundsOffset;
+	                alienBounds.center = newPosition + boundsOffset;
+
+					if (BoundsContainsBounds(moveBounds, alienBounds))
+	                {
+	                    transform.position = newPosition;
+	                }
+					else if (playerManager.Player.Alive)
+					{
+						// GAME OVER
+						playerManager.Lives = 1;
+						playerManager.Player.ExplodeAt(playerManager.Player.transform.position, 100, 10);
+					}
+	            }
+
+	            alienBounds.center = transform.position + boundsOffset;
+
+				// Check to see if there are still moves to fit in the timestep
+				nextMove += moveDelay;
+			}
 
             nextMove = frameTime + moveDelay;
         }

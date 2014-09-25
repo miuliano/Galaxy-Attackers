@@ -22,6 +22,18 @@ public class PlayerManager : MonoBehaviour {
 		}
 	}
 
+	/// <summary>
+	/// Gets the player.
+	/// </summary>
+	/// <value>The player.</value>
+	public Player Player
+	{
+		get
+		{
+			return player;
+		}
+	}
+
     /// <summary>
     /// The number of lives a player starts with.
     /// </summary>

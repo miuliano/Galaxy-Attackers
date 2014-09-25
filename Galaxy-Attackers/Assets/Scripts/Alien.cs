@@ -41,6 +41,18 @@ public class Alien : MonoBehaviour {
 	}
 
 	/// <summary>
+	/// Gets the voxel animation.
+	/// </summary>
+	/// <value>The voxel animation.</value>
+	public VoxelAnimation VoxelAnimation
+	{
+		get 
+		{
+			return voxelAnimation;
+		}
+	}
+
+	/// <summary>
 	/// Occurs when the alien is destroyed.
 	/// </summary>
 	public event AlienEventHandler OnDestroy;
