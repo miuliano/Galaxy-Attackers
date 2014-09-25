@@ -99,7 +99,10 @@ public class PlayerManager : MonoBehaviour {
 
         if (Lives <= 0)
         {
-            // GAME OVER;
+			// Hackity hack - works for now
+			GameObject.Find("AlienWave").SetActive(false);
+			GameObject.Find("GameOverText").renderer.enabled = true;
+
             return;
         }
 

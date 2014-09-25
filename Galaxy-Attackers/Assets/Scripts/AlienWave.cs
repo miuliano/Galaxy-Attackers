@@ -146,8 +146,6 @@ public class AlienWave : MonoBehaviour {
 
 		moveDelay = minMoveDelay * Mathf.Pow(maxMoveDelay / minMoveDelay, (waveAlive - 1) / (float)maxWaveAlive);
 
-		Debug.Log(moveDelay);
-
 		// Update animation delays for each alien
 		foreach (Alien a in wave)
 		{
@@ -155,6 +153,11 @@ public class AlienWave : MonoBehaviour {
 		}
 
 		waveAlive--;
+
+		if (waveAlive <= 0)
+		{
+			// Start a new game
+		}
 
 		flagUpdateBounds = true;
     }
